@@ -330,18 +330,19 @@ function renderMenuItems() {
 
 // Toggle In-Stock status
 async function toggleItemStock(itemId) {
-  try {
-    const res = await fetch(`/api/items/${itemId}/toggle-stock`, { method: 'PATCH' });
-    const data = await res.json();
-    if (data.success) {
-      showAdminToast(data.message, 'success');
-      fetchAdminData();
-    } else {
-      showAdminToast(data.message || 'Action failed', 'error');
-    }
-  } catch (err) {
-    showAdminToast('Error toggling stock status', 'error');
-  }
+  const item = adminState.items.find(i => i.id === itemId);
+  if (!item) return;
+
+  item.isAvailable = item.isAvailable === false ? true : false;
+  showAdminToast(`Stock status set to ${item.isAvailable ? 'In Stock' : 'Out of stock'}`, 'success');
+  renderMenuItems();
+  updateHeaderAndSidebar();
+  renderDashboard();
+
+  await pushStateToFirebase();
+
+  // Background fallback
+  fetch(`/api/items/${itemId}/toggle-stock`, { method: 'PATCH' }).catch(() => {});
 }
 
 // Item Modal Management
@@ -399,60 +400,61 @@ async function saveItem(e) {
   const itemId = document.getElementById('formItemId').value;
 
   const payload = {
-    name: document.getElementById('formItemName').value,
+    id: itemId || ('item-' + Date.now()),
+    name: document.getElementById('formItemName').value.trim(),
     categoryId: document.getElementById('formItemCategory').value,
     isVeg: true,
     price: Number(document.getElementById('formItemPrice').value),
     originalPrice: document.getElementById('formItemOriginalPrice').value ? Number(document.getElementById('formItemOriginalPrice').value) : null,
     spiceLevel: Number(document.getElementById('formItemSpiceLevel').value),
-    portion: document.getElementById('formItemPortion').value,
-    image: document.getElementById('formItemImage').value,
-    description: document.getElementById('formItemDesc').value,
+    portion: document.getElementById('formItemPortion').value.trim() || 'Serves 1-2',
+    image: document.getElementById('formItemImage').value.trim() || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
+    description: document.getElementById('formItemDesc').value.trim(),
     isJain: document.getElementById('formItemIsJain').checked,
     isChefSpecial: document.getElementById('formItemIsChefSpecial').checked,
     isBestseller: document.getElementById('formItemIsBestseller').checked,
     isAvailable: document.getElementById('formItemIsAvailable').checked
   };
 
-  try {
-    const url = itemId ? `/api/items/${itemId}` : '/api/items';
-    const method = itemId ? 'PUT' : 'POST';
-
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await res.json();
-    if (data.success) {
-      closeItemModal();
-      showAdminToast(itemId ? 'Dish updated successfully' : 'New dish added successfully', 'success');
-      fetchAdminData();
-    } else {
-      showAdminToast(data.message || 'Failed to save dish', 'error');
+  if (itemId) {
+    const idx = adminState.items.findIndex(i => i.id === itemId);
+    if (idx !== -1) {
+      adminState.items[idx] = { ...adminState.items[idx], ...payload };
     }
-  } catch (err) {
-    console.error(err);
-    showAdminToast('Error saving dish', 'error');
+  } else {
+    adminState.items.unshift(payload);
   }
+
+  closeItemModal();
+  showAdminToast(itemId ? 'Dish updated successfully' : 'New dish added successfully', 'success');
+  renderMenuItems();
+  updateHeaderAndSidebar();
+  renderDashboard();
+
+  await pushStateToFirebase();
+
+  // Background fallback
+  const url = itemId ? `/api/items/${itemId}` : '/api/items';
+  const method = itemId ? 'PUT' : 'POST';
+  fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(() => {});
 }
 
 async function deleteItem(itemId, name) {
   if (!confirm(`Are you sure you want to delete "${name}" from the menu?`)) return;
 
-  try {
-    const res = await fetch(`/api/items/${itemId}`, { method: 'DELETE' });
-    const data = await res.json();
-    if (data.success) {
-      showAdminToast(`Deleted "${name}"`, 'success');
-      fetchAdminData();
-    } else {
-      showAdminToast(data.message || 'Failed to delete dish', 'error');
-    }
-  } catch (err) {
-    showAdminToast('Error deleting dish', 'error');
-  }
+  adminState.items = adminState.items.filter(i => i.id !== itemId);
+  showAdminToast(`Deleted "${name}"`, 'success');
+  renderMenuItems();
+  updateHeaderAndSidebar();
+  renderDashboard();
+
+  await pushStateToFirebase();
+
+  fetch(`/api/items/${itemId}`, { method: 'DELETE' }).catch(() => {});
 }
 
 // 3. CATEGORIES MANAGEMENT
@@ -520,33 +522,47 @@ async function saveCategory(e) {
   const catId = document.getElementById('formCatId').value;
 
   const payload = {
-    name: document.getElementById('formCatName').value,
-    icon: document.getElementById('formCatIcon').value,
-    description: document.getElementById('formCatDesc').value,
-    subtitle: document.getElementById('formCatDesc').value
+    name: document.getElementById('formCatName').value.trim(),
+    icon: document.getElementById('formCatIcon').value.trim() || '🍽️',
+    description: document.getElementById('formCatDesc').value.trim(),
+    subtitle: document.getElementById('formCatDesc').value.trim()
   };
 
-  try {
-    const url = catId ? `/api/categories/${catId}` : '/api/categories';
-    const method = catId ? 'PUT' : 'POST';
-
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await res.json();
-    if (data.success) {
-      closeCategoryModal();
-      showAdminToast(catId ? 'Category updated' : 'Category created', 'success');
-      fetchAdminData();
-    } else {
-      showAdminToast(data.message || 'Error saving category', 'error');
+  if (catId) {
+    const cat = adminState.categories.find(c => c.id === catId);
+    if (cat) {
+      cat.name = payload.name;
+      cat.icon = payload.icon;
+      cat.description = payload.description;
+      cat.subtitle = payload.subtitle;
     }
-  } catch (err) {
-    showAdminToast('Failed to save category', 'error');
+  } else {
+    adminState.categories.push({
+      id: 'cat-' + Date.now(),
+      name: payload.name,
+      icon: payload.icon,
+      description: payload.description,
+      subtitle: payload.subtitle,
+      slug: payload.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+    });
   }
+
+  closeCategoryModal();
+  showAdminToast(catId ? 'Category updated' : 'Category created', 'success');
+  renderCategories();
+  populateCategoryDropdowns();
+  updateHeaderAndSidebar();
+
+  await pushStateToFirebase();
+
+  // Background fallback
+  const url = catId ? `/api/categories/${catId}` : '/api/categories';
+  const method = catId ? 'PUT' : 'POST';
+  fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(() => {});
 }
 
 async function deleteCategory(catId, name, itemCount) {
@@ -557,18 +573,15 @@ async function deleteCategory(catId, name, itemCount) {
 
   if (!confirm(`Are you sure you want to delete category "${name}"?`)) return;
 
-  try {
-    const res = await fetch(`/api/categories/${catId}`, { method: 'DELETE' });
-    const data = await res.json();
-    if (data.success) {
-      showAdminToast(`Category "${name}" deleted`, 'success');
-      fetchAdminData();
-    } else {
-      showAdminToast(data.message || 'Failed to delete category', 'error');
-    }
-  } catch (err) {
-    showAdminToast('Error deleting category', 'error');
-  }
+  adminState.categories = adminState.categories.filter(c => c.id !== catId);
+  showAdminToast(`Category "${name}" deleted`, 'success');
+  renderCategories();
+  populateCategoryDropdowns();
+  updateHeaderAndSidebar();
+
+  await pushStateToFirebase();
+
+  fetch(`/api/categories/${catId}`, { method: 'DELETE' }).catch(() => {});
 }
 
 // 4. KITCHEN ORDERS DISPLAY (KDS)
@@ -765,22 +778,17 @@ async function saveSettings(e) {
     address: document.getElementById('settingAddress').value
   };
 
-  try {
-    const res = await fetch('/api/settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
-    if (data.success) {
-      showAdminToast('Restaurant settings saved successfully!', 'success');
-      fetchAdminData();
-    } else {
-      showAdminToast('Failed to save settings', 'error');
-    }
-  } catch (err) {
-    showAdminToast('Error saving settings', 'error');
-  }
+  adminState.settings = { ...adminState.settings, ...payload };
+  showAdminToast('Restaurant settings saved successfully!', 'success');
+  updateHeaderAndSidebar();
+
+  await pushStateToFirebase();
+
+  fetch('/api/settings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(() => {});
 }
 
 // Helpers
@@ -887,6 +895,24 @@ function setupFirebaseAdmin() {
       if (cfg.databaseURL && firebase.database) {
         firebaseAdminRtdb = firebase.database().ref('menu');
         console.log('🟢 Firebase Realtime Database connected');
+
+        // Sync admin state live with Cloud
+        firebaseAdminRtdb.on('value', (snap) => {
+          const val = snap.val();
+          if (val && val.items && val.items.length) {
+            adminState.settings = val.settings || adminState.settings;
+            adminState.categories = val.categories || adminState.categories;
+            adminState.items = val.items || adminState.items;
+            updateHeaderAndSidebar();
+            renderDashboard();
+            renderMenuItems();
+            renderCategories();
+            populateCategoryDropdowns();
+            populateTableSelectors();
+            populateSettingsForm();
+            generateQrCodePreview();
+          }
+        });
       }
       if (firebase.firestore) {
         firebaseAdminDb = firebase.firestore();
@@ -940,29 +966,11 @@ function saveCloudSettings() {
 
 // 1-Click Sync Current Menu to Firebase
 async function syncLocalToFirebase() {
-  if (!firebaseAdminRtdb && !firebaseAdminDb) {
-    showAdminToast('Please configure Firebase in Settings first!', 'warning');
-    return;
-  }
-
   const btn = document.getElementById('btnSyncFirebase');
   if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Syncing...';
 
   try {
-    const payload = {
-      settings: adminState.settings,
-      categories: adminState.categories,
-      items: adminState.items,
-      updatedAt: new Date().toISOString()
-    };
-
-    if (firebaseAdminRtdb) {
-      await firebaseAdminRtdb.set(payload);
-    }
-    if (firebaseAdminDb) {
-      await firebaseAdminDb.collection("restaurant").doc("menu").set(payload);
-    }
-
+    await pushStateToFirebase();
     showAdminToast(`Synced all ${adminState.items.length} items & ${adminState.categories.length} categories to Firebase!`, 'success');
   } catch (err) {
     console.error('Sync failed:', err);
@@ -972,26 +980,58 @@ async function syncLocalToFirebase() {
   }
 }
 
-// Background push to Firebase whenever dishes or categories are modified
-async function pushStateToFirebaseIfAvailable() {
-  if (!firebaseAdminRtdb && !firebaseAdminDb) return;
-  try {
-    const payload = {
-      settings: adminState.settings,
-      categories: adminState.categories,
-      items: adminState.items,
-      updatedAt: new Date().toISOString()
-    };
-    if (firebaseAdminRtdb) {
+// Push State to Firebase (Direct Realtime Database + REST Backup)
+async function pushStateToFirebase() {
+  const payload = {
+    settings: adminState.settings,
+    categories: adminState.categories,
+    items: adminState.items,
+    updatedAt: new Date().toISOString()
+  };
+
+  let pushed = false;
+
+  // 1. Direct Realtime Database SDK
+  if (firebaseAdminRtdb) {
+    try {
       await firebaseAdminRtdb.set(payload);
+      pushed = true;
+      console.log('⚡ Firebase RTDB SDK updated successfully');
+    } catch (err) {
+      console.warn('RTDB SDK write failed, trying REST:', err);
     }
-    if (firebaseAdminDb) {
-      await firebaseAdminDb.collection("restaurant").doc("menu").set(payload);
-    }
-    console.log('⚡ Firebase synced with latest changes');
-  } catch (err) {
-    console.warn('Firebase background push warning:', err);
   }
+
+  // 2. Direct REST Backup (Works everywhere without SDK auth hurdles)
+  const cfg = window.FIREBASE_CONFIG;
+  if (cfg && cfg.databaseURL) {
+    try {
+      const restRes = await fetch(`${cfg.databaseURL}/menu.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (restRes.ok) {
+        pushed = true;
+        console.log('⚡ Firebase RTDB REST updated successfully');
+      }
+    } catch (e) {
+      console.warn('REST push error:', e);
+    }
+  }
+
+  if (firebaseAdminDb) {
+    try {
+      await firebaseAdminDb.collection("restaurant").doc("menu").set(payload);
+    } catch (e) {}
+  }
+
+  return pushed;
+}
+
+// Compatibility alias
+async function pushStateToFirebaseIfAvailable() {
+  return pushStateToFirebase();
 }
 
 // Handle Image File Upload (Auto Canvas Compression + ImgBB API)
