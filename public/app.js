@@ -23,36 +23,67 @@ function initMenuSource() {
       if (!firebase.apps.length) {
         firebase.initializeApp(cfg);
       }
-      const firestore = firebase.firestore();
       firebaseInitialized = true;
-      console.log('⚡ Connected to Firebase Realtime Firestore');
 
-      // Realtime listener for instant live customer menu updates
-      firestore.collection("restaurant").doc("menu").onSnapshot((doc) => {
-        const loadingEl = document.getElementById('loadingState');
-        const contentEl = document.getElementById('menuContent');
+      // 1. Check Realtime Database (preferred when databaseURL is configured)
+      if (cfg.databaseURL && firebase.database) {
+        console.log('⚡ Connected to Firebase Realtime Database:', cfg.databaseURL);
+        const rtdbRef = firebase.database().ref('menu');
 
-        if (doc.exists) {
-          const data = doc.data();
-          state.settings = data.settings || {};
-          state.categories = data.categories || [];
-          state.items = data.items || [];
+        rtdbRef.on('value', (snapshot) => {
+          const loadingEl = document.getElementById('loadingState');
+          const contentEl = document.getElementById('menuContent');
+          const data = snapshot.val();
 
-          applySettingsToUI();
-          renderCategoryNav();
-          renderMenu();
+          if (data && data.items && data.items.length) {
+            state.settings = data.settings || {};
+            state.categories = data.categories || [];
+            state.items = data.items || [];
 
-          if (loadingEl) loadingEl.classList.add('hidden');
-          if (contentEl) contentEl.classList.remove('hidden');
-        } else {
-          // If Firestore document does not exist yet, fallback to local API
+            applySettingsToUI();
+            renderCategoryNav();
+            renderMenu();
+
+            if (loadingEl) loadingEl.classList.add('hidden');
+            if (contentEl) contentEl.classList.remove('hidden');
+          } else {
+            fetchMenuData();
+          }
+        }, (err) => {
+          console.warn('Realtime DB read error, using local API:', err);
           fetchMenuData();
-        }
-      }, (err) => {
-        console.warn('Firebase listener error, falling back to local API:', err);
-        fetchMenuData();
-      });
-      return;
+        });
+        return;
+      }
+
+      // 2. Or Firestore fallback
+      if (firebase.firestore) {
+        const firestore = firebase.firestore();
+        firestore.collection("restaurant").doc("menu").onSnapshot((doc) => {
+          const loadingEl = document.getElementById('loadingState');
+          const contentEl = document.getElementById('menuContent');
+
+          if (doc.exists) {
+            const data = doc.data();
+            state.settings = data.settings || {};
+            state.categories = data.categories || [];
+            state.items = data.items || [];
+
+            applySettingsToUI();
+            renderCategoryNav();
+            renderMenu();
+
+            if (loadingEl) loadingEl.classList.add('hidden');
+            if (contentEl) contentEl.classList.remove('hidden');
+          } else {
+            fetchMenuData();
+          }
+        }, (err) => {
+          console.warn('Firestore read error, using local API:', err);
+          fetchMenuData();
+        });
+        return;
+      }
     } catch (e) {
       console.warn('Firebase init failed, using local API:', e);
     }

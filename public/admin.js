@@ -855,6 +855,7 @@ function showAdminToast(message, type = 'info') {
 // ================= CLOUD SYNC & IMGBB IMAGE UPLOADER =================
 
 let firebaseAdminDb = null;
+let firebaseAdminRtdb = null;
 
 function initCloudSettings() {
   const savedImgbb = localStorage.getItem('lamensa_imgbb_key') || window.IMGBB_API_KEY || '';
@@ -883,9 +884,14 @@ function setupFirebaseAdmin() {
       if (!firebase.apps.length) {
         firebase.initializeApp(cfg);
       }
-      firebaseAdminDb = firebase.firestore();
+      if (cfg.databaseURL && firebase.database) {
+        firebaseAdminRtdb = firebase.database().ref('menu');
+        console.log('🟢 Firebase Realtime Database connected');
+      }
+      if (firebase.firestore) {
+        firebaseAdminDb = firebase.firestore();
+      }
       updateCloudStatusBadge(true);
-      console.log('🟢 Firebase Admin connected');
     } else {
       updateCloudStatusBadge(false);
     }
@@ -934,7 +940,7 @@ function saveCloudSettings() {
 
 // 1-Click Sync Current Menu to Firebase
 async function syncLocalToFirebase() {
-  if (!firebaseAdminDb) {
+  if (!firebaseAdminRtdb && !firebaseAdminDb) {
     showAdminToast('Please configure Firebase in Settings first!', 'warning');
     return;
   }
@@ -950,7 +956,13 @@ async function syncLocalToFirebase() {
       updatedAt: new Date().toISOString()
     };
 
-    await firebaseAdminDb.collection("restaurant").doc("menu").set(payload);
+    if (firebaseAdminRtdb) {
+      await firebaseAdminRtdb.set(payload);
+    }
+    if (firebaseAdminDb) {
+      await firebaseAdminDb.collection("restaurant").doc("menu").set(payload);
+    }
+
     showAdminToast(`Synced all ${adminState.items.length} items & ${adminState.categories.length} categories to Firebase!`, 'success');
   } catch (err) {
     console.error('Sync failed:', err);
@@ -962,7 +974,7 @@ async function syncLocalToFirebase() {
 
 // Background push to Firebase whenever dishes or categories are modified
 async function pushStateToFirebaseIfAvailable() {
-  if (!firebaseAdminDb) return;
+  if (!firebaseAdminRtdb && !firebaseAdminDb) return;
   try {
     const payload = {
       settings: adminState.settings,
@@ -970,7 +982,12 @@ async function pushStateToFirebaseIfAvailable() {
       items: adminState.items,
       updatedAt: new Date().toISOString()
     };
-    await firebaseAdminDb.collection("restaurant").doc("menu").set(payload);
+    if (firebaseAdminRtdb) {
+      await firebaseAdminRtdb.set(payload);
+    }
+    if (firebaseAdminDb) {
+      await firebaseAdminDb.collection("restaurant").doc("menu").set(payload);
+    }
     console.log('⚡ Firebase synced with latest changes');
   } catch (err) {
     console.warn('Firebase background push warning:', err);
