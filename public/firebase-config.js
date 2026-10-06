@@ -10,4 +10,4 @@ window.FIREBASE_CONFIG = {
 };
 
 // ImgBB API Key for direct photo uploads
-window.IMGBB_API_KEY = "";
+window.IMGBB_API_KEY = "1c4e7f2fb1d5bcd0570a5894a27546db";
