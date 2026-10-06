@@ -91,7 +91,7 @@
     </p>
 
     <!-- 8 Rounded App Hub Tiles (Grid Matching Screenshot 1) -->
-    <div class="w-full max-w-xl mx-auto space-y-4 mb-10">
+    <div id="frontHubTilesContainer" class="w-full max-w-xl mx-auto space-y-4 mb-10">
       
       <!-- Row 1: 5 Tiles -->
       <div class="grid grid-cols-5 gap-2.5 sm:gap-4">
@@ -224,19 +224,178 @@ END:VCARD`;
       document.body.removeChild(link);
     }
 
-    // Fetch live logo & settings
+    const CARD_DEFAULTS = {
+      contact: {
+        title: 'Contact Card',
+        url: '#visit',
+        bg: 'bg-[#ffeed6]',
+        text: 'text-[#7c441b]',
+        icon: 'fa-solid fa-user'
+      },
+      maps: {
+        title: 'Google Maps',
+        url: 'https://goo.gl/maps/BPHVUQhLn2WfJgUg7',
+        target: '_blank',
+        bg: 'bg-[#bbf7d0]',
+        text: 'text-[#14532d]',
+        icon: 'fa-solid fa-location-dot'
+      },
+      menu: {
+        title: 'Menu',
+        url: '/menu',
+        bg: 'bg-[#fed7aa]',
+        text: 'text-[#9a3412]',
+        ring: 'ring-2 ring-[#dfb15b]/50',
+        icon: 'fa-solid fa-utensils'
+      },
+      instagram: {
+        title: 'Instagram',
+        url: 'https://www.instagram.com/lamensa_multicuisine',
+        target: '_blank',
+        bg: 'bg-[#fbcfe8]',
+        text: 'text-[#9d174d]',
+        icon: 'fa-solid fa-arrow-up-right-from-square'
+      },
+      mail: {
+        title: 'Mail',
+        url: 'mailto:lamensasurat@gmail.com',
+        bg: 'bg-[#bfdbfe]',
+        text: 'text-[#1e3a8a]',
+        icon: 'fa-solid fa-envelope'
+      },
+      review: {
+        title: 'Review Us',
+        url: 'https://g.co/kgs/Q28SPB',
+        target: '_blank',
+        bg: 'bg-[#fef08a]',
+        text: 'text-[#854d0e]',
+        icon: 'fa-regular fa-star'
+      },
+      whatsapp: {
+        title: 'WhatsApp',
+        url: 'https://wa.me/919875281816?text=Hello%20La%20Mensa,%20I%20would%20like%20to%20know%20more%20about%20your%20menu.',
+        target: '_blank',
+        bg: 'bg-[#a7f3d0]',
+        text: 'text-[#065f46]',
+        icon: 'fa-brands fa-whatsapp'
+      },
+      call: {
+        title: 'Call',
+        url: 'tel:+919875281816',
+        bg: 'bg-[#e9d5ff]',
+        text: 'text-[#581c87]',
+        icon: 'fa-solid fa-phone'
+      }
+    };
+
+    function renderCardItem(c) {
+      const def = CARD_DEFAULTS[c.id] || {
+        title: c.title || 'Link',
+        url: c.url || '#',
+        bg: 'bg-[#fef3c7]',
+        text: 'text-[#92400e]',
+        icon: 'fa-solid fa-arrow-up-right-from-square'
+      };
+
+      const title = c.title || def.title;
+      const href = c.url || def.url;
+      const isContact = (c.id === 'contact' && (!c.url || c.url === '#visit'));
+      const target = isContact ? '' : (def.target || (href.startsWith('http') ? '_blank' : ''));
+      const onclick = isContact ? 'onclick="downloadContactCard(event)"' : '';
+      const ring = def.ring || '';
+
+      let visualHtml = '';
+      if (c.image && c.image.trim()) {
+        visualHtml = `<img src="${c.image.trim()}" alt="${title}" class="w-full h-full object-cover rounded-2xl" />`;
+      } else {
+        visualHtml = `<i class="${def.icon}"></i>`;
+      }
+
+      return `
+        <a href="${href}" ${target ? `target="${target}"` : ''} ${onclick} class="flex flex-col items-center group">
+          <div class="hub-tile w-14 h-14 sm:w-16 sm:h-16 rounded-2xl ${def.bg} ${def.text} flex items-center justify-center text-xl sm:text-2xl shadow-lg ${ring}">
+            ${visualHtml}
+          </div>
+          <span class="text-[10px] sm:text-[11px] font-semibold text-[#ffdaa9] mt-2 group-hover:text-white transition text-center line-clamp-1">${title}</span>
+        </a>
+      `;
+    }
+
+    function renderAllFrontTiles(cardsList) {
+      const container = document.getElementById('frontHubTilesContainer');
+      if (!container) return;
+
+      // Filter out any unshown card
+      const visibleCards = (cardsList || []).filter(c => c.shown !== false && c.isShown !== false && !c.isHidden);
+      if (!visibleCards.length) return;
+
+      if (visibleCards.length === 8) {
+        const row1 = visibleCards.slice(0, 5).map(renderCardItem).join('');
+        const row2 = visibleCards.slice(5).map(renderCardItem).join('');
+        container.innerHTML = `
+          <div class="grid grid-cols-5 gap-2.5 sm:gap-4">
+            ${row1}
+          </div>
+          <div class="grid grid-cols-3 gap-2.5 sm:gap-4 max-w-sm mx-auto">
+            ${row2}
+          </div>
+        `;
+      } else {
+        const allItems = visibleCards.map(renderCardItem).join('');
+        container.innerHTML = `
+          <div class="flex flex-wrap items-center justify-center gap-2.5 sm:gap-4 max-w-xl mx-auto">
+            ${allItems}
+          </div>
+        `;
+      }
+    }
+
+    // Fetch live logo & cards settings
     (async function initFrontPageSettings() {
       try {
+        let cards = null;
+        let settings = null;
+
+        // 1. Check local draft first (preserves uncommitted changes on same machine)
+        try {
+          const draftRaw = localStorage.getItem('lamensa_admin_draft_data');
+          if (draftRaw) {
+            const draft = JSON.parse(draftRaw);
+            if (draft) {
+              if (draft.frontPageCards && draft.frontPageCards.length) cards = draft.frontPageCards;
+              if (draft.settings) settings = draft.settings;
+            }
+          }
+        } catch (e) {}
+
+        // 2. Fetch live data from Firebase Cloud
         const fbUrl = 'https://la-mensa-menu-default-rtdb.firebaseio.com/menu.json';
         const res = await fetch(`${fbUrl}?t=${Date.now()}`);
         const data = await res.json();
-        if (data && data.settings && data.settings.logoUrl) {
-          const crestInner = document.getElementById('frontCrestInner');
-          if (crestInner) {
-            crestInner.innerHTML = `<img src="${data.settings.logoUrl}" alt="La Mensa" class="w-full h-full object-cover rounded-full" />`;
+        if (data) {
+          if (!cards && data.frontPageCards && data.frontPageCards.length) {
+            cards = data.frontPageCards;
+          }
+          if (data.settings) {
+            settings = { ...data.settings, ...(settings || {}) };
           }
         }
-      } catch (e) {}
+
+        // Apply Logo
+        if (settings && settings.logoUrl) {
+          const crestInner = document.getElementById('frontCrestInner');
+          if (crestInner) {
+            crestInner.innerHTML = `<img src="${settings.logoUrl}" alt="La Mensa" class="w-full h-full object-cover rounded-full" />`;
+          }
+        }
+
+        // Apply Dynamic Front Page Cards
+        if (cards && cards.length) {
+          renderAllFrontTiles(cards);
+        }
+      } catch (e) {
+        console.warn('Front page initialization warning:', e);
+      }
     })();
   </script>
 </body>

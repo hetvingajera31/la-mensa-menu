@@ -277,8 +277,14 @@ function renderCategoryNav() {
   const container = document.getElementById('categoryNavContainer');
   if (!container) return;
 
-  const availableItems = state.items.filter(i => i.isAvailable !== false);
+  const visibleCategories = state.categories.filter(c => c.isShown !== false && !c.isHidden);
+  const visibleCategoryIds = new Set(visibleCategories.map(c => c.id));
+  const availableItems = state.items.filter(i => i.isAvailable !== false && visibleCategoryIds.has(i.categoryId));
   const totalCount = availableItems.length;
+
+  if (state.activeCategory !== 'all' && !visibleCategoryIds.has(state.activeCategory)) {
+    state.activeCategory = 'all';
+  }
 
   let html = `
     <button onclick="filterByCategory('all')" class="cat-pill ${state.activeCategory === 'all' ? 'active bg-[#09221b] text-[#ffdaa9] font-bold border border-[#dfb15b]/40 shadow-sm' : 'bg-white text-stone-700 border border-[#e6e2d6] hover:bg-[#ffdaa9]/20 hover:border-[#dfb15b] font-semibold'} px-4 py-1.5 rounded-full text-xs whitespace-nowrap transition shadow-xs">
@@ -286,7 +292,7 @@ function renderCategoryNav() {
     </button>
   `;
 
-  state.categories.forEach(cat => {
+  visibleCategories.forEach(cat => {
     const catItemsCount = availableItems.filter(i => i.categoryId === cat.id).length;
     if (catItemsCount === 0) return; // Do not show empty categories
 
@@ -340,11 +346,18 @@ function renderMenu() {
   if (!container) return;
 
   const currency = state.settings.currencySymbol || '₹';
+  const visibleCategories = state.categories.filter(c => c.isShown !== false && !c.isHidden);
+  const visibleCategoryIds = new Set(visibleCategories.map(c => c.id));
 
   // Filter items based on active criteria
   let filteredItems = state.items.filter(item => {
     // If out of stock, completely hide from customer menu
     if (item.isAvailable === false) {
+      return false;
+    }
+
+    // If its category is hidden/unshown, completely hide from customer menu
+    if (!visibleCategoryIds.has(item.categoryId)) {
       return false;
     }
 
@@ -394,10 +407,10 @@ function renderMenu() {
   container.classList.remove('hidden');
   if (emptyState) emptyState.classList.add('hidden');
 
-  // Group items by category
-  let categoriesToDisplay = state.categories;
+  // Group items by category (only visible categories)
+  let categoriesToDisplay = visibleCategories;
   if (state.activeCategory !== 'all') {
-    categoriesToDisplay = state.categories.filter(c => c.id === state.activeCategory);
+    categoriesToDisplay = visibleCategories.filter(c => c.id === state.activeCategory);
   }
 
   let html = '';
@@ -522,15 +535,34 @@ function openDishModal(itemId) {
   document.getElementById('modalPrice').textContent = `${currency}${item.price}`;
   
   const origPriceEl = document.getElementById('modalOriginalPrice');
-  if (item.originalPrice) {
-    origPriceEl.textContent = `${currency}${item.originalPrice}`;
-    origPriceEl.classList.remove('hidden');
-  } else {
-    origPriceEl.classList.add('hidden');
+  if (origPriceEl) {
+    if (item.originalPrice) {
+      origPriceEl.textContent = `${currency}${item.originalPrice}`;
+      origPriceEl.classList.remove('hidden');
+    } else {
+      origPriceEl.classList.add('hidden');
+    }
   }
 
-  document.getElementById('modalPortion').innerHTML = `<i class="fa-solid fa-plate-wheat mr-1 text-[#dfb15b]"></i> ${item.portion || 'Serves 1-2'}`;
-  document.getElementById('modalPrepTime').innerHTML = `<i class="fa-regular fa-clock mr-1 text-[#dfb15b]"></i> ${item.prepTime || '15 mins'}`;
+  const portionEl = document.getElementById('modalPortion');
+  if (portionEl) {
+    if (item.portion && item.portion.trim()) {
+      portionEl.innerHTML = `<i class="fa-solid fa-plate-wheat mr-1 text-[#dfb15b]"></i> ${item.portion}`;
+      portionEl.classList.remove('hidden');
+    } else {
+      portionEl.classList.add('hidden');
+    }
+  }
+
+  const prepTimeEl = document.getElementById('modalPrepTime');
+  if (prepTimeEl) {
+    if (item.prepTime && item.prepTime.trim()) {
+      prepTimeEl.innerHTML = `<i class="fa-regular fa-clock mr-1 text-[#dfb15b]"></i> ${item.prepTime}`;
+      prepTimeEl.classList.remove('hidden');
+    } else {
+      prepTimeEl.classList.add('hidden');
+    }
+  }
   
   const spiceLevels = ['Zero Spice', '🌶️ Mild Spice', '🌶️🌶️ Medium Spice', '🌶️🌶️🌶️ Extra Spicy'];
   document.getElementById('modalSpiceLevel').textContent = spiceLevels[item.spiceLevel || 0] || 'Mild';

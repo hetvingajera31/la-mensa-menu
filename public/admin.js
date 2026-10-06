@@ -27,11 +27,120 @@ const adminState = {
     { id: 'review', title: 'Review Us', badge: 'REVIEW', shown: true, url: 'https://g.page/r/review', image: '' },
     { id: 'whatsapp', title: 'WhatsApp', badge: 'WHATSAPP', shown: true, url: 'https://wa.me/919875281816', image: '' },
     { id: 'call', title: 'Call', badge: 'CALL', shown: true, url: 'tel:+919875281816', image: '' }
-  ]
+  ],
+  draftChangesCount: 0,
+  hasDraftChanges: false
 };
 
+const DRAFT_STORAGE_KEY = 'lamensa_admin_draft_data';
 let firebaseAdminRtdb = null;
 const DEFAULT_ADMIN_PASS = 'lamensagroup';
+
+// 1. Mark Changes in Draft (Conserves Firebase Cloud Write Quota!)
+function markDraftChanged(actionDescription) {
+  adminState.draftChangesCount = (adminState.draftChangesCount || 0) + 1;
+  adminState.hasDraftChanges = true;
+
+  const draftPayload = {
+    settings: adminState.settings,
+    categories: adminState.categories,
+    items: adminState.items,
+    quickFilters: adminState.quickFilters,
+    customDishOptions: adminState.customDishOptions,
+    frontPageCards: adminState.frontPageCards,
+    draftChangesCount: adminState.draftChangesCount,
+    savedAt: new Date().toISOString()
+  };
+
+  try {
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftPayload));
+  } catch (e) {
+    console.warn('Draft save error:', e);
+  }
+
+  updateDraftNavigationUI();
+
+  if (actionDescription) {
+    showAdminToast(`${actionDescription} saved to Draft! Click "Save & Changes" in navbar to apply.`, 'info');
+  }
+}
+
+// 2. Update Navbar Button & Cloud Status Badge UI
+function updateDraftNavigationUI() {
+  const btn = document.getElementById('navSavePublishBtn');
+  const badge = document.getElementById('draftChangesBadge');
+  const cloudBadge = document.getElementById('cloudStatusBadge');
+
+  const count = adminState.draftChangesCount || 0;
+
+  if (adminState.hasDraftChanges && count > 0) {
+    if (badge) {
+      badge.textContent = count;
+      badge.classList.remove('hidden');
+    }
+    if (btn) {
+      btn.classList.add('ring-2', 'ring-amber-300', 'shadow-lg');
+    }
+    if (cloudBadge) {
+      cloudBadge.className = 'px-2.5 sm:px-3 py-1.5 rounded-full bg-amber-950/80 text-amber-300 border border-amber-500/40 text-[10px] sm:text-[11px] font-bold flex items-center gap-1.5 sm:gap-2 shadow-sm';
+      cloudBadge.innerHTML = `<span class="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full bg-amber-400 animate-ping"></span><span class="hidden sm:inline">${count} Draft Pending</span><span class="sm:hidden">${count} Draft</span>`;
+    }
+  } else {
+    if (badge) {
+      badge.classList.add('hidden');
+    }
+    if (btn) {
+      btn.classList.remove('ring-2', 'ring-amber-300', 'shadow-lg');
+    }
+    if (cloudBadge) {
+      cloudBadge.className = 'px-2.5 sm:px-3 py-1.5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-500/30 text-[10px] sm:text-[11px] font-bold flex items-center gap-1.5 sm:gap-2 shadow-sm';
+      cloudBadge.innerHTML = `<span class="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full bg-emerald-400 animate-pulse"></span><span class="hidden sm:inline">Cloud Synced (Live)</span><span class="sm:hidden">Live</span>`;
+    }
+  }
+}
+
+// 3. Publish All Draft Changes to Firebase Cloud in ONE Single Request
+async function publishDraftToFirebase() {
+  const btn = document.getElementById('navSavePublishBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin text-xs"></i> <span>Saving...</span>';
+  }
+
+  try {
+    const pushed = await pushStateToFirebase();
+    if (pushed) {
+      adminState.hasDraftChanges = false;
+      adminState.draftChangesCount = 0;
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      updateDraftNavigationUI();
+      showAdminToast('All draft changes published to live menu!', 'success');
+    } else {
+      showAdminToast('Could not sync to cloud. Your draft is still saved locally.', 'warning');
+    }
+  } catch (err) {
+    showAdminToast('Sync error: ' + err.message, 'warning');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `
+        <i class="fa-solid fa-floppy-disk text-xs"></i>
+        <span class="hidden xs:inline sm:inline">Save & Changes</span>
+        <span class="xs:hidden sm:hidden">Save</span>
+        <span id="draftChangesBadge" class="hidden px-1.5 py-0.2 rounded-full bg-[#0d2d24] text-[#ffdaa9] text-[10px] font-extrabold">0</span>
+      `;
+      updateDraftNavigationUI();
+    }
+  }
+}
+
+// Warn if navigating away with unsaved draft
+window.addEventListener('beforeunload', (e) => {
+  if (adminState.hasDraftChanges && adminState.draftChangesCount > 0) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
 
 // Check Admin Authentication on Load
 function checkAdminAuth() {
@@ -124,12 +233,34 @@ async function fetchAdminData() {
     }
   }
 
+  // Check if an uncommitted local draft exists in localStorage (preserves work on refresh!)
+  try {
+    const draftRaw = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (draftRaw) {
+      const draftObj = JSON.parse(draftRaw);
+      if (draftObj && draftObj.items && draftObj.items.length) {
+        adminState.settings = draftObj.settings || adminState.settings;
+        adminState.categories = draftObj.categories || adminState.categories;
+        adminState.items = draftObj.items || adminState.items;
+        if (draftObj.quickFilters) adminState.quickFilters = draftObj.quickFilters;
+        if (draftObj.customDishOptions) adminState.customDishOptions = draftObj.customDishOptions;
+        if (draftObj.frontPageCards) adminState.frontPageCards = draftObj.frontPageCards;
+        adminState.draftChangesCount = draftObj.draftChangesCount || 1;
+        adminState.hasDraftChanges = true;
+        console.log('Restored unsaved local draft with', adminState.draftChangesCount, 'changes');
+      }
+    }
+  } catch (draftErr) {
+    console.warn('Draft restoration warning:', draftErr);
+  }
+
   updateMetrics();
   renderDishesTable();
   renderCategoriesGrid();
   populateCategoryDropdowns();
   populateProfileForm();
   populateFrontPageForm();
+  updateDraftNavigationUI();
 }
 
 // Live Firebase RTDB connection listener
@@ -141,6 +272,9 @@ function initFirebaseLiveListener() {
       if (cfg.databaseURL && firebase.database) {
         firebaseAdminRtdb = firebase.database().ref('menu');
         firebaseAdminRtdb.on('value', (snap) => {
+          // If admin has uncommitted draft changes, do NOT overwrite their screen!
+          if (adminState.hasDraftChanges) return;
+
           const cloudData = snap.val();
           if (cloudData && cloudData.items && cloudData.items.length) {
             adminState.settings = cloudData.settings || adminState.settings;
@@ -310,11 +444,6 @@ function renderDishesTable() {
               <div class="text-[11px] text-stone-500 mt-0.5 line-clamp-1 max-w-sm">
                 ${item.description || 'Artisanal recipe prepared fresh.'}
               </div>
-              <div class="flex items-center gap-2 text-[10px] text-stone-400 mt-1">
-                <span><i class="fa-solid fa-plate-wheat text-[#dfb15b]"></i> ${item.portion || 'Serves 1-2'}</span>
-                <span>•</span>
-                <span><i class="fa-regular fa-clock text-[#dfb15b]"></i> ${item.prepTime || '15 mins'}</span>
-              </div>
             </div>
           </div>
         </td>
@@ -331,11 +460,6 @@ function renderDishesTable() {
           <div class="font-extrabold text-[#0d2d24] text-sm">
             ${currency}${item.price}
           </div>
-          ${item.originalPrice ? `
-            <span class="text-[10px] text-stone-400 line-through">
-              ${currency}${item.originalPrice}
-            </span>
-          ` : ''}
         </td>
 
         <!-- Tags / Badges -->
@@ -386,19 +510,18 @@ function renderDishesTable() {
   }).join('');
 }
 
-// Toggle Stock Instant Action
-async function toggleItemStock(itemId) {
+// Toggle Stock Instant Action (Saved to Draft)
+function toggleItemStock(itemId) {
   const item = adminState.items.find(i => i.id === itemId);
   if (!item) return;
 
   item.isAvailable = item.isAvailable === false ? true : false;
-  showAdminToast(`"${item.name}" marked as ${item.isAvailable ? 'In Stock' : 'Sold Out'}!`, item.isAvailable ? 'success' : 'warning');
   
   updateMetrics();
   renderDishesTable();
   renderCategoriesGrid();
 
-  await pushStateToFirebase();
+  markDraftChanged(`"${item.name}" marked as ${item.isAvailable ? 'In Stock' : 'Sold Out'}`);
 }
 
 // Render Core and Dynamic Custom Dish Options inside Add/Edit Dish Modal
@@ -467,9 +590,6 @@ function openEditDishModal(itemId) {
   document.getElementById('dishFormName').value = item.name;
   document.getElementById('dishFormCategory').value = item.categoryId;
   document.getElementById('dishFormPrice').value = item.price;
-  document.getElementById('dishFormOrigPrice').value = item.originalPrice || '';
-  document.getElementById('dishFormPortion').value = item.portion || '';
-  document.getElementById('dishFormPrepTime').value = item.prepTime || '';
   document.getElementById('dishFormImage').value = item.image || '';
   document.getElementById('dishFormDesc').value = item.description || '';
   renderDishModalOptions(item);
@@ -497,9 +617,9 @@ async function saveDish(e) {
     name: document.getElementById('dishFormName').value.trim(),
     categoryId: document.getElementById('dishFormCategory').value,
     price: Number(document.getElementById('dishFormPrice').value),
-    originalPrice: document.getElementById('dishFormOrigPrice').value ? Number(document.getElementById('dishFormOrigPrice').value) : null,
-    portion: document.getElementById('dishFormPortion').value.trim() || 'Serves 1-2',
-    prepTime: document.getElementById('dishFormPrepTime').value.trim() || '15 mins',
+    originalPrice: null,
+    portion: '',
+    prepTime: '',
     image: document.getElementById('dishFormImage').value.trim() || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
     description: document.getElementById('dishFormDesc').value.trim(),
     isVeg: true,
@@ -518,24 +638,20 @@ async function saveDish(e) {
   }
 
   closeDishModal();
-  showAdminToast(id ? 'Dish updated successfully' : 'New dish added', 'success');
   updateMetrics();
   renderDishesTable();
   renderCategoriesGrid();
-
-  await pushStateToFirebase();
+  markDraftChanged(id ? `Dish "${payload.name}" updated` : `New dish "${payload.name}" added`);
 }
 
 async function deleteDish(itemId, name) {
   if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
 
   adminState.items = adminState.items.filter(i => i.id !== itemId);
-  showAdminToast(`"${name}" deleted`, 'info');
   updateMetrics();
   renderDishesTable();
   renderCategoriesGrid();
-
-  await pushStateToFirebase();
+  markDraftChanged(`Dish "${name}" deleted`);
 }
 
 // 5. TAB 2: CATEGORIES MANAGEMENT (Screenshot 1)
@@ -546,27 +662,29 @@ function renderCategoriesGrid() {
   container.innerHTML = adminState.categories.map((cat, index) => {
     const totalInCat = adminState.items.filter(i => i.categoryId === cat.id).length;
     const soldOutInCat = adminState.items.filter(i => i.categoryId === cat.id && i.isAvailable === false).length;
+    const isCatShown = cat.isShown !== false && !cat.isHidden;
 
     return `
-      <div class="bg-white rounded-2xl p-4 border border-[#e6e2d6] shadow-xs flex items-center justify-between gap-3 hover:border-[#dfb15b] transition">
+      <div class="bg-white rounded-2xl p-4 border ${isCatShown ? 'border-[#e6e2d6]' : 'border-stone-300 bg-stone-50/70 opacity-80'} shadow-xs flex items-center justify-between gap-3 hover:border-[#dfb15b] transition">
         
         <!-- Left: Index + Name & Counts -->
         <div class="flex items-center gap-3 min-w-0">
-          <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-800 font-bold text-xs flex items-center justify-center border border-amber-200 shrink-0">
+          <div class="w-8 h-8 rounded-xl ${isCatShown ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-stone-100 text-stone-500 border-stone-200'} font-bold text-xs flex items-center justify-center border shrink-0">
             ${index + 1}
           </div>
           <div class="min-w-0">
-            <h4 class="font-bold text-sm text-[#0d2d24] truncate">
+            <h4 class="font-bold text-sm ${isCatShown ? 'text-[#0d2d24]' : 'text-stone-500 line-through decoration-stone-400'} truncate">
               ${cat.name}
             </h4>
             <div class="text-[11px] text-stone-500 mt-0.5 truncate">
-              Section • <strong class="text-emerald-700">${totalInCat} dishes</strong>
+              Section • <strong class="${isCatShown ? 'text-emerald-700' : 'text-stone-500'}">${totalInCat} dishes</strong>
               ${soldOutInCat > 0 ? `<span class="text-rose-600 font-semibold ml-1.5">• ${soldOutInCat} Sold Out</span>` : ''}
+              ${!isCatShown ? `<span class="text-amber-800 font-bold ml-1.5 px-1.5 py-0.5 rounded bg-amber-100 border border-amber-300">Hidden from Menu</span>` : ''}
             </div>
           </div>
         </div>
 
-        <!-- Right: Move Controls [Input] [Move] [↑] [↓], Shown Badge, Edit, Delete -->
+        <!-- Right: Move Controls [Input] [Move] [↑] [↓], Shown/Unshown Button, Edit, Delete -->
         <div class="flex items-center gap-1.5 shrink-0">
           
           <!-- Move Order Box [ Number Input ] [ Move Button ] [ ↑ ] [ ↓ ] (Matches Screenshot media_1791288676413.png) -->
@@ -595,10 +713,15 @@ function renderCategoriesGrid() {
             </button>
           </div>
 
-          <!-- Shown Pill -->
-          <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-300 text-[11px] font-bold hidden sm:inline-block">
-            👁️ Shown
-          </span>
+          <!-- Shown / Unshown Interactive Toggle Button -->
+          <button
+            onclick="toggleCategoryVisibility('${cat.id}')"
+            title="Click to ${isCatShown ? 'hide category from' : 'show category in'} digital menu"
+            class="px-2.5 py-1 rounded-full text-[11px] font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer ${isCatShown ? 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100' : 'bg-stone-100 text-stone-600 border border-stone-300 hover:bg-stone-200'}"
+          >
+            <i class="fa-solid ${isCatShown ? 'fa-eye text-emerald-600' : 'fa-eye-slash text-stone-400'} text-[10px]"></i>
+            <span>${isCatShown ? 'Shown' : 'Unshown'}</span>
+          </button>
 
           <!-- Edit Button -->
           <button onclick="openEditCategoryModal('${cat.id}')" title="Edit Category" class="w-8 h-8 rounded-xl bg-[#f7f5ef] hover:bg-[#ffdaa9] text-stone-700 hover:text-[#0d2d24] flex items-center justify-center transition border border-[#e6e2d6]">
@@ -617,6 +740,20 @@ function renderCategoriesGrid() {
   }).join('');
 }
 
+// Toggle Category Visibility (Shown vs Unshown in Customer Menu)
+function toggleCategoryVisibility(catId) {
+  const cat = adminState.categories.find(c => c.id === catId);
+  if (!cat) return;
+
+  const currentlyShown = cat.isShown !== false && !cat.isHidden;
+  const newShown = !currentlyShown;
+  cat.isShown = newShown;
+  cat.isHidden = !newShown;
+
+  renderCategoriesGrid();
+  markDraftChanged(`"${cat.name}" marked as ${newShown ? 'Shown' : 'Unshown'}`);
+}
+
 // Handle Move Category Input from card
 function handleCategoryMoveInput(catId) {
   const inputEl = document.getElementById(`catPosInput-${catId}`);
@@ -627,7 +764,7 @@ function handleCategoryMoveInput(catId) {
 }
 
 // Move Category to specific 1-based index (e.g. typing 5 moves it to 5th position)
-async function moveCategoryToPosition(catId, targetPos) {
+function moveCategoryToPosition(catId, targetPos) {
   const curIdx = adminState.categories.findIndex(c => c.id === catId);
   if (curIdx === -1) return;
 
@@ -642,12 +779,11 @@ async function moveCategoryToPosition(catId, targetPos) {
 
   renderCategoriesGrid();
   populateCategoryDropdowns();
-  showAdminToast(`"${movedCat.name}" moved to position ${targetIdx + 1}!`, 'success');
-  await pushStateToFirebase();
+  markDraftChanged(`"${movedCat.name}" moved to position ${targetIdx + 1}`);
 }
 
 // Move Category Order (Up/Down step)
-async function moveCategory(catId, delta) {
+function moveCategory(catId, delta) {
   const idx = adminState.categories.findIndex(c => c.id === catId);
   if (idx === -1) return;
 
@@ -661,7 +797,7 @@ async function moveCategory(catId, delta) {
 
   renderCategoriesGrid();
   populateCategoryDropdowns();
-  await pushStateToFirebase();
+  markDraftChanged(`"${temp.name}" position updated`);
 }
 
 function openAddCategoryModal() {
@@ -703,17 +839,17 @@ async function saveCategory(e) {
   } else {
     adminState.categories.push({
       id: 'cat-' + Date.now(),
+      isShown: true,
+      isHidden: false,
       ...payload
     });
   }
 
   closeCategoryModal();
-  showAdminToast(id ? 'Category updated' : 'Category added', 'success');
   updateMetrics();
   renderCategoriesGrid();
   populateCategoryDropdowns();
-
-  await pushStateToFirebase();
+  markDraftChanged(id ? `Category "${payload.name}" updated` : `New category "${payload.name}" added`);
 }
 
 async function deleteCategory(catId, name, itemCount) {
@@ -724,12 +860,10 @@ async function deleteCategory(catId, name, itemCount) {
   if (!confirm(`Delete category "${name}"?`)) return;
 
   adminState.categories = adminState.categories.filter(c => c.id !== catId);
-  showAdminToast(`Category "${name}" deleted`, 'info');
   updateMetrics();
   renderCategoriesGrid();
   populateCategoryDropdowns();
-
-  await pushStateToFirebase();
+  markDraftChanged(`Category "${name}" deleted`);
 }
 
 // 6. TAB 3: RESTAURANT PROFILE & WHATSAPP (Screenshot 2)
@@ -830,7 +964,7 @@ function renderCustomTags() {
   `).join('');
 }
 
-async function addCustomTag() {
+function addCustomTag() {
   const input = document.getElementById('newCustomTagInput');
   const val = input.value.trim();
   if (!val) return;
@@ -838,18 +972,16 @@ async function addCustomTag() {
   adminState.customDishOptions.push(val);
   input.value = '';
   renderCustomTags();
-  await pushStateToFirebase();
-  showAdminToast(`Custom option "${val}" added!`, 'success');
+  markDraftChanged(`Custom option "${val}" added`);
 }
 
-async function removeCustomTag(tag) {
+function removeCustomTag(tag) {
   adminState.customDishOptions = adminState.customDishOptions.filter(t => t !== tag);
   renderCustomTags();
-  await pushStateToFirebase();
-  showAdminToast(`Custom option "${tag}" removed.`, 'info');
+  markDraftChanged(`Custom option "${tag}" removed`);
 }
 
-async function saveProfileSettings(e) {
+function saveProfileSettings(e) {
   e.preventDefault();
 
   if (document.getElementById('profLogoUrl')) {
@@ -872,11 +1004,9 @@ async function saveProfileSettings(e) {
   const newPass = document.getElementById('profPassword') ? document.getElementById('profPassword').value.trim() : '';
   if (newPass && newPass.length >= 6) {
     adminState.settings.adminPassword = newPass;
-    showAdminToast('Admin password updated successfully!', 'info');
   }
 
-  await pushStateToFirebase();
-  showAdminToast('Restaurant profile & logo saved to cloud!', 'success');
+  markDraftChanged('Restaurant profile & logo updated');
 }
 
 // 7. TAB 4: MANAGE FRONT PAGE (Screenshot 4)
@@ -896,26 +1026,126 @@ function renderFrontPageTilesList() {
   const container = document.getElementById('frontPageTilesListContainer');
   if (!container) return;
 
-  container.innerHTML = adminState.frontPageCards.map((c, idx) => `
-    <div class="bg-white p-3.5 rounded-2xl border border-[#e6e2d6] space-y-2 text-xs">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <span class="font-bold text-[#0d2d24] text-sm">${c.title}</span>
-          <span class="text-[9px] font-extrabold px-2 py-0.5 rounded bg-stone-100 text-stone-600 border border-stone-200 uppercase">${c.badge}</span>
+  container.innerHTML = adminState.frontPageCards.map((c, idx) => {
+    const isShown = c.shown !== false;
+
+    return `
+      <div class="bg-white p-3.5 rounded-2xl border ${isShown ? 'border-[#e6e2d6]' : 'border-stone-300 bg-stone-50/70 opacity-80'} space-y-2.5 text-xs">
+        
+        <!-- Header: Title, Badge, Shown/Unshown Button & Reorder -->
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2 min-w-0">
+            ${c.image ? `<img src="${c.image}" class="w-7 h-7 rounded-lg object-cover border border-[#e6e2d6] shrink-0" />` : ''}
+            <span class="font-bold ${isShown ? 'text-[#0d2d24]' : 'text-stone-500 line-through'} text-sm truncate">${c.title}</span>
+            <span class="text-[9px] font-extrabold px-2 py-0.5 rounded bg-stone-100 text-stone-600 border border-stone-200 uppercase shrink-0">${c.badge}</span>
+          </div>
+          
+          <div class="flex items-center gap-1.5 shrink-0">
+            <!-- Shown / Unshown Toggle Button -->
+            <button
+              type="button"
+              onclick="toggleFrontCardShown(${idx})"
+              title="Click to ${isShown ? 'hide card from' : 'show card on'} front page"
+              class="px-2.5 py-1 rounded-full text-[10px] font-bold transition flex items-center gap-1 shadow-xs cursor-pointer ${isShown ? 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100' : 'bg-stone-100 text-stone-600 border border-stone-300 hover:bg-stone-200'}"
+            >
+              <i class="fa-solid ${isShown ? 'fa-eye text-emerald-600' : 'fa-eye-slash text-stone-400'} text-[9px]"></i>
+              <span>${isShown ? 'Shown' : 'Unshown'}</span>
+            </button>
+
+            <!-- Reorder buttons -->
+            <button type="button" onclick="moveFrontCard(${idx}, -1)" title="Move up" class="p-1 rounded text-stone-400 hover:text-stone-700"><i class="fa-solid fa-arrow-up text-[10px]"></i></button>
+            <button type="button" onclick="moveFrontCard(${idx}, 1)" title="Move down" class="p-1 rounded text-stone-400 hover:text-stone-700"><i class="fa-solid fa-arrow-down text-[10px]"></i></button>
+            
+            ${c.badge === 'CUSTOM' ? `
+              <button type="button" onclick="deleteCustomFrontCard(${idx})" title="Delete card" class="p-1 text-stone-400 hover:text-rose-600"><i class="fa-solid fa-trash text-[10px]"></i></button>
+            ` : ''}
+          </div>
         </div>
-        <div class="flex items-center gap-2">
-          <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-300 text-[10px] font-bold">
-            ${c.shown ? 'Shown' : 'Hidden'}
-          </span>
-          <button type="button" onclick="moveFrontCard(${idx}, -1)" class="p-1 text-stone-400 hover:text-stone-700"><i class="fa-solid fa-arrow-up text-[10px]"></i></button>
-          <button type="button" onclick="moveFrontCard(${idx}, 1)" class="p-1 text-stone-400 hover:text-stone-700"><i class="fa-solid fa-arrow-down text-[10px]"></i></button>
+
+        <!-- Inputs Row: URL and Image -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-[#f7f5ef]">
+          <div>
+            <label class="block text-[10px] font-bold text-stone-500 uppercase mb-0.5">Destination URL</label>
+            <input
+              type="text"
+              value="${c.url || ''}"
+              onchange="updateFrontCardUrl(${idx}, this.value)"
+              placeholder="Card URL (https://...)"
+              class="w-full px-3 py-1.5 rounded-xl bg-[#f7f5ef] border border-[#e6e2d6] text-xs font-mono outline-none focus:border-[#dfb15b]"
+            />
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-bold text-stone-500 uppercase mb-0.5">Card Tile Image</label>
+            <div class="flex items-center gap-1.5">
+              <input
+                type="text"
+                value="${c.image || ''}"
+                onchange="updateFrontCardImage(${idx}, this.value)"
+                placeholder="Image URL (optional)"
+                class="flex-1 px-3 py-1.5 rounded-xl bg-[#f7f5ef] border border-[#e6e2d6] text-xs outline-none focus:border-[#dfb15b]"
+                id="fpCardImgInput-${idx}"
+              />
+              <label class="px-2.5 py-1.5 rounded-xl bg-[#0d2d24] hover:bg-[#153f33] text-[#ffdaa9] font-bold text-[10px] flex items-center gap-1 cursor-pointer shrink-0 transition shadow-xs">
+                <i class="fa-solid fa-cloud-arrow-up text-[10px]"></i>
+                <span>Upload</span>
+                <input type="file" accept="image/*" class="hidden" onchange="uploadFrontCardImg(${idx}, event)" />
+              </label>
+            </div>
+          </div>
         </div>
+
       </div>
-      <div>
-        <input type="text" value="${c.url}" onchange="updateFrontCardUrl(${idx}, this.value)" placeholder="Card URL (https://...)" class="w-full px-3 py-1.5 rounded-xl bg-[#f7f5ef] border border-[#e6e2d6] text-xs font-mono outline-none" />
-      </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
+}
+
+function toggleFrontCardShown(idx) {
+  const card = adminState.frontPageCards[idx];
+  if (!card) return;
+
+  card.shown = card.shown === false ? true : false;
+  renderFrontPageTilesList();
+  markDraftChanged(`Front Card "${card.title}" set to ${card.shown ? 'Shown' : 'Unshown'}`);
+}
+
+function updateFrontCardImage(idx, val) {
+  const card = adminState.frontPageCards[idx];
+  if (!card) return;
+  card.image = val.trim();
+  renderFrontPageTilesList();
+  markDraftChanged(`Tile image for "${card.title}" updated`);
+}
+
+async function uploadFrontCardImg(idx, e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const card = adminState.frontPageCards[idx];
+  const key = window.IMGBB_API_KEY || '1c4e7f2fb1d5bcd0570a5894a27546db';
+  showAdminToast(`Uploading image for "${card.title}"...`, 'info');
+
+  try {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const res = await fetch(`https://api.imgbb.com/1/upload?key=${key}`, {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if (data.success) {
+      const url = data.data.display_url || data.data.url;
+      card.image = url;
+      renderFrontPageTilesList();
+      markDraftChanged(`Image for "${card.title}" uploaded`);
+      showAdminToast(`Tile image for "${card.title}" uploaded successfully!`, 'success');
+    } else {
+      throw new Error(data.error ? data.error.message : 'Upload failed');
+    }
+  } catch (err) {
+    showAdminToast('Upload error: ' + err.message, 'warning');
+  }
 }
 
 function moveFrontCard(idx, delta) {
@@ -925,10 +1155,19 @@ function moveFrontCard(idx, delta) {
   adminState.frontPageCards[idx] = adminState.frontPageCards[target];
   adminState.frontPageCards[target] = temp;
   renderFrontPageTilesList();
+  markDraftChanged('Front cards reordered');
 }
 
 function updateFrontCardUrl(idx, val) {
   adminState.frontPageCards[idx].url = val.trim();
+  markDraftChanged(`URL for "${adminState.frontPageCards[idx].title}" updated`);
+}
+
+function deleteCustomFrontCard(idx) {
+  const name = adminState.frontPageCards[idx].title;
+  adminState.frontPageCards.splice(idx, 1);
+  renderFrontPageTilesList();
+  markDraftChanged(`Custom card "${name}" removed`);
 }
 
 function addCustomFrontCard() {
@@ -948,9 +1187,10 @@ function addCustomFrontCard() {
   document.getElementById('newFpCardTitle').value = '';
   document.getElementById('newFpCardUrl').value = '';
   renderFrontPageTilesList();
+  markDraftChanged(`Custom card "${title}" added`);
 }
 
-async function saveFrontPageSettings(e) {
+function saveFrontPageSettings(e) {
   e.preventDefault();
   adminState.settings.profileImgUrl = document.getElementById('fpProfileImg').value.trim();
   adminState.settings.bgImgUrl = document.getElementById('fpBgImg').value.trim();
@@ -959,8 +1199,7 @@ async function saveFrontPageSettings(e) {
   adminState.settings.email = document.getElementById('fpEmail').value.trim();
   adminState.settings.reviewUrl = document.getElementById('fpReviewUrl').value.trim();
 
-  await pushStateToFirebase();
-  showAdminToast('Front page settings updated to cloud!', 'success');
+  markDraftChanged('Front page settings updated');
 }
 
 // 8. TAB 5: BACKUP & FACTORY RESET (Screenshot 3)
