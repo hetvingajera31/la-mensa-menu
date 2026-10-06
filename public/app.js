@@ -414,7 +414,7 @@ function renderDishCard(item, currency) {
         <div class="flex items-start justify-between gap-3 mb-2">
           <div class="flex items-center gap-2 min-w-0">
             <span class="veg-indicator shrink-0" title="100% Pure Vegetarian"></span>
-            <h4 class="font-bold text-base sm:text-[17px] text-[#0d2d24] group-hover:text-[#b8860b] transition leading-snug truncate">
+            <h4 class="font-bold text-base sm:text-[17px] text-[#0d2d24] group-hover:text-[#b8860b] transition leading-snug break-words">
               ${item.name}
             </h4>
           </div>

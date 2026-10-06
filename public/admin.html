@@ -40,35 +40,36 @@
 </head>
 <body class="bg-[#f7f5ef] text-[#1c2c26] min-h-screen antialiased flex flex-col selection:bg-[#dfb15b] selection:text-[#0d2d24]">
 
-  <!-- ================= 1. TOP HEADER (Exact Match to Screenshots) ================= -->
-  <header class="sticky top-0 z-40 bg-[#09221b] border-b border-[#dfb15b]/25 shadow-md">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+  <!-- ================= 1. TOP HEADER (Exact Match to Screenshots - Fully Responsive) ================= -->
+  <header class="sticky top-0 z-40 bg-[#09221b] border-b border-[#dfb15b]/25 shadow-md w-full overflow-hidden">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4">
       
       <!-- Left: Front Page Back Button & Title -->
-      <div class="flex items-center gap-3 sm:gap-4">
-        <a href="/" class="px-3 py-1.5 rounded-xl bg-[#0d2d24] text-[#ffdaa9] border border-[#dfb15b]/30 text-xs font-semibold hover:bg-[#153f33] transition flex items-center gap-1.5 shadow-sm">
+      <div class="flex items-center gap-2 sm:gap-4 min-w-0">
+        <a href="/" class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#0d2d24] text-[#ffdaa9] border border-[#dfb15b]/30 text-xs font-semibold hover:bg-[#153f33] transition flex items-center gap-1.5 shadow-sm shrink-0">
           <i class="fa-solid fa-arrow-left text-[11px]"></i>
           <span class="hidden sm:inline">Front Page</span>
         </a>
 
-        <div>
-          <h1 class="font-serif font-bold text-base sm:text-lg text-[#ffdaa9] tracking-wider uppercase leading-none">
+        <div class="min-w-0">
+          <h1 class="font-serif font-bold text-sm sm:text-lg text-[#ffdaa9] tracking-wider uppercase leading-none truncate">
             LA MENSA Live Admin Panel
           </h1>
-          <p class="text-[9px] sm:text-[10px] text-[#dfb15b] tracking-[0.22em] font-semibold uppercase mt-0.5">
+          <p class="text-[8px] sm:text-[10px] text-[#dfb15b] tracking-[0.22em] font-semibold uppercase mt-0.5 truncate hidden xs:block sm:block">
             MENU, AVAILABILITY & PRICING
           </p>
         </div>
       </div>
 
       <!-- Right: Status Badge & Lock -->
-      <div class="flex items-center gap-2 sm:gap-3">
-        <div id="cloudStatusBadge" class="px-3 py-1.5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold flex items-center gap-2 shadow-sm">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Cloud Synced (Live)</span>
+      <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        <div id="cloudStatusBadge" class="px-2.5 sm:px-3 py-1.5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-500/30 text-[10px] sm:text-[11px] font-bold flex items-center gap-1.5 sm:gap-2 shadow-sm">
+          <span class="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="hidden sm:inline">Cloud Synced (Live)</span>
+          <span class="sm:hidden">Live</span>
         </div>
 
-        <button onclick="lockAdminSession()" title="Lock Admin Screen" class="px-3 py-1.5 rounded-xl bg-[#0d2d24] text-[#ffdaa9]/90 hover:text-white border border-[#dfb15b]/30 text-xs font-semibold flex items-center gap-1.5 transition shadow-sm">
+        <button onclick="lockAdminSession()" title="Lock Admin Screen" class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#0d2d24] text-[#ffdaa9]/90 hover:text-white border border-[#dfb15b]/30 text-xs font-semibold flex items-center gap-1.5 transition shadow-sm">
           <i class="fa-solid fa-lock text-[11px] text-[#dfb15b]"></i>
           <span class="hidden sm:inline">Lock</span>
         </button>
@@ -214,9 +215,9 @@
       </div>
 
       <!-- Dishes Table Card -->
-      <div class="bg-white rounded-3xl border border-[#e6e2d6] shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
+      <div class="bg-white rounded-3xl border border-[#e6e2d6] shadow-sm overflow-hidden w-full">
+        <div class="overflow-x-auto w-full no-scrollbar">
+          <table class="w-full text-left border-collapse min-w-[680px]">
             <thead>
               <tr class="bg-[#faf9f5] border-b border-[#e6e2d6] text-[10px] font-bold tracking-wider text-stone-500 uppercase">
                 <th class="py-3.5 px-4 sm:px-6">Dish Name</th>

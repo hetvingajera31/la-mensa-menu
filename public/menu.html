@@ -39,49 +39,49 @@
 </head>
 <body class="bg-[#f7f5ef] text-[#1c2c26] antialiased min-h-screen selection:bg-[#dfb15b] selection:text-[#0d2d24]">
 
-  <!-- ================= 1. TOP HEADER (Exact Match to Image 2) ================= -->
-  <header class="sticky top-0 z-40 bg-[#09221b] border-b border-[#dfb15b]/20 shadow-md">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+  <!-- ================= 1. TOP HEADER (Exact Match to Image 2 - Fully Responsive) ================= -->
+  <header class="sticky top-0 z-40 bg-[#09221b] border-b border-[#dfb15b]/20 shadow-md w-full overflow-hidden">
+    <div class="max-w-6xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4">
       
       <!-- Brand & Status -->
-      <a href="/" class="flex items-center gap-3 group">
-        <div class="w-10 h-10 rounded-xl border border-[#dfb15b]/40 bg-[#0d2d24] flex items-center justify-center text-[#dfb15b] text-lg shadow-sm">
+      <a href="/" class="flex items-center gap-2 sm:gap-3 group min-w-0">
+        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-[#dfb15b]/40 bg-[#0d2d24] flex items-center justify-center text-[#dfb15b] text-base sm:text-lg shadow-sm shrink-0">
           <i class="fa-solid fa-utensils"></i>
         </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="font-serif font-bold text-base sm:text-lg tracking-wider text-[#ffdaa9] uppercase leading-none">
+        <div class="min-w-0">
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <h1 class="font-serif font-bold text-sm sm:text-lg tracking-wider text-[#ffdaa9] uppercase leading-none truncate">
               LA MENSA
             </h1>
-            <span class="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 uppercase tracking-widest flex items-center gap-1">
+            <span class="text-[8px] sm:text-[9px] font-extrabold px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 uppercase tracking-widest flex items-center gap-1 shrink-0">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> OPEN
             </span>
           </div>
-          <p class="text-[10px] text-[#dfb15b] tracking-[0.2em] font-semibold uppercase mt-0.5">
+          <p class="text-[9px] sm:text-[10px] text-[#dfb15b] tracking-[0.2em] font-semibold uppercase mt-0.5 truncate">
             MULTI CUISINE
           </p>
         </div>
       </a>
 
       <!-- Right Action Buttons (Sync, Table QR, Instagram) -->
-      <div class="flex items-center gap-2 sm:gap-3">
+      <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
         
         <!-- Live Sync Button -->
-        <button onclick="fetchMenuData()" title="Sync Latest Menu" class="px-3 py-1.5 rounded-xl bg-[#0d2d24] hover:bg-[#153f33] text-[#ffdaa9] border border-[#dfb15b]/30 text-xs font-semibold flex items-center gap-1.5 transition shadow-sm">
+        <button onclick="fetchMenuData()" title="Sync Latest Menu" class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#0d2d24] hover:bg-[#153f33] text-[#ffdaa9] border border-[#dfb15b]/30 text-xs font-semibold flex items-center gap-1.5 transition shadow-sm">
           <i class="fa-solid fa-rotate text-[11px] text-[#dfb15b]"></i>
           <span class="hidden sm:inline">Sync</span>
         </button>
 
         <!-- Table QR Modal Trigger -->
-        <button onclick="openQrModal()" title="View Menu QR Code" class="px-3 py-1.5 rounded-xl bg-[#0d2d24] hover:bg-[#153f33] text-[#ffdaa9] border border-[#dfb15b]/30 text-xs font-semibold flex items-center gap-1.5 transition shadow-sm">
+        <button onclick="openQrModal()" title="View Menu QR Code" class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#0d2d24] hover:bg-[#153f33] text-[#ffdaa9] border border-[#dfb15b]/30 text-xs font-semibold flex items-center gap-1.5 transition shadow-sm">
           <i class="fa-solid fa-qrcode text-[11px] text-[#dfb15b]"></i>
           <span class="hidden sm:inline">Table QR</span>
         </button>
 
         <!-- Instagram Pill Button -->
-        <a href="https://www.instagram.com/lamensa_multicuisine" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 text-white font-bold text-xs flex items-center gap-1.5 shadow transition hover:opacity-95">
+        <a href="https://www.instagram.com/lamensa_multicuisine" target="_blank" class="px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 text-white font-bold text-xs flex items-center gap-1.5 shadow transition hover:opacity-95">
           <i class="fa-brands fa-instagram text-xs"></i>
-          <span>Instagram</span>
+          <span class="hidden sm:inline">Instagram</span>
         </a>
 
       </div>
@@ -89,70 +89,72 @@
     </div>
   </header>
 
-  <!-- ================= 2. HERO SECTION (Exact Match to Image 2) ================= -->
-  <section class="bg-gradient-to-b from-[#09221b] via-[#0d2d24] to-[#0d2d24] text-center text-[#ffdaa9] pt-8 pb-7 px-4 border-b border-[#dfb15b]/20">
-    <div class="max-w-4xl mx-auto">
+  <!-- ================= 2. HERO SECTION (Exact Match to Image 2 - Fully Responsive) ================= -->
+  <section class="bg-gradient-to-b from-[#09221b] via-[#0d2d24] to-[#0d2d24] text-center text-[#ffdaa9] pt-7 sm:pt-8 pb-6 sm:pb-7 px-3 sm:px-4 border-b border-[#dfb15b]/20 w-full overflow-hidden">
+    <div class="max-w-4xl mx-auto w-full">
       
       <!-- Ornate Crest -->
-      <div class="w-16 h-16 rounded-full border border-[#dfb15b]/50 bg-[#09221b] flex items-center justify-center mx-auto mb-3 shadow-xl">
-        <i class="fa-solid fa-utensils text-[#dfb15b] text-xl"></i>
+      <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full border border-[#dfb15b]/50 bg-[#09221b] flex items-center justify-center mx-auto mb-3 shadow-xl">
+        <i class="fa-solid fa-utensils text-[#dfb15b] text-lg sm:text-xl"></i>
       </div>
 
       <!-- Subtitle & Big Heading -->
-      <span class="text-[10px] sm:text-xs font-bold tracking-[0.25em] text-[#dfb15b] uppercase block mb-1">
+      <span class="text-[9px] sm:text-xs font-bold tracking-[0.25em] text-[#dfb15b] uppercase block mb-1">
         ESTD. 2021 • KATARGAM, SURAT
       </span>
-      <h2 class="text-3xl sm:text-5xl font-serif font-extrabold tracking-[0.1em] text-[#ffdaa9] uppercase mb-1">
+      <h2 class="text-2xl sm:text-4xl md:text-5xl font-serif font-extrabold tracking-[0.1em] text-[#ffdaa9] uppercase mb-1">
         LA MENSA
       </h2>
-      <p class="text-[11px] sm:text-xs font-bold tracking-[0.25em] text-[#dfb15b] uppercase mb-2">
+      <p class="text-[10px] sm:text-xs font-bold tracking-[0.25em] text-[#dfb15b] uppercase mb-2">
         MULTI CUISINE
       </p>
-      <p class="font-serif italic text-xs sm:text-sm text-[#e8d8b9]/80 mb-4">
+      <p class="font-serif italic text-[11px] sm:text-sm text-[#e8d8b9]/80 mb-4 px-2">
         "There is no sincerer love than the love of food."
       </p>
 
-      <!-- Address & Timings Pill -->
-      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#09221b]/80 border border-[#dfb15b]/25 text-[11px] sm:text-xs text-[#e8d8b9]/90 max-w-2xl mx-auto mb-6 backdrop-blur-sm shadow-sm">
-        <i class="fa-solid fa-location-dot text-[#dfb15b] text-[10px] shrink-0"></i>
-        <span class="truncate sm:whitespace-normal">Ramkatha Road, Beside Gunjan Park, Near SRK Sports Complex, Katargam, Surat • 11:00 AM - 11:00 PM (All Days)</span>
+      <!-- Address & Timings Pill (Guaranteed No Horizontal Blowout) -->
+      <div class="w-full px-2 mb-5 sm:mb-6">
+        <div class="inline-flex max-w-full items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-[#09221b]/80 border border-[#dfb15b]/25 text-[10px] sm:text-xs text-[#e8d8b9]/90 backdrop-blur-sm shadow-sm overflow-hidden">
+          <i class="fa-solid fa-location-dot text-[#dfb15b] text-[10px] shrink-0"></i>
+          <span class="truncate">Ramkatha Road, Beside Gunjan Park, Near SRK Sports Complex, Katargam, Surat • 11:00 AM - 11:00 PM</span>
+        </div>
       </div>
 
       <!-- Large White Search Pill -->
-      <div class="max-w-xl mx-auto relative mb-4">
-        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 text-sm"></i>
+      <div class="max-w-xl mx-auto relative mb-4 px-1">
+        <i class="fa-solid fa-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-stone-400 text-sm"></i>
         <input
           type="text"
           id="searchInput"
           placeholder="Search dish or ingredient..."
-          class="w-full pl-11 pr-10 py-3 rounded-full bg-white text-[#1c2c26] text-xs sm:text-sm font-medium outline-none shadow-lg placeholder-stone-400 border border-stone-200 focus:ring-2 focus:ring-[#dfb15b]"
+          class="w-full pl-11 pr-10 py-2.5 sm:py-3 rounded-full bg-white text-[#1c2c26] text-xs sm:text-sm font-medium outline-none shadow-lg placeholder-stone-400 border border-stone-200 focus:ring-2 focus:ring-[#dfb15b]"
         />
-        <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600">
+        <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600">
           <i class="fa-solid fa-circle-xmark"></i>
         </button>
       </div>
 
       <!-- Dietary Quick Filter Chips (Pills below search) -->
-      <div class="flex items-center justify-center gap-2 flex-wrap text-xs font-semibold max-w-2xl mx-auto">
-        <button onclick="setDietFilter('all')" id="filter-all" class="diet-btn active px-3.5 py-1.5 rounded-full bg-[#ffdaa9] text-[#0d2d24] font-bold transition shadow-sm border border-[#dfb15b]">
+      <div class="flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap text-[11px] sm:text-xs font-semibold max-w-2xl mx-auto px-1">
+        <button onclick="setDietFilter('all')" id="filter-all" class="diet-btn active px-3 sm:px-3.5 py-1.5 rounded-full bg-[#ffdaa9] text-[#0d2d24] font-bold transition shadow-sm border border-[#dfb15b]">
           All Dishes
         </button>
-        <button onclick="setDietFilter('veg')" id="filter-veg" class="diet-btn px-3.5 py-1.5 rounded-full bg-[#09221b] text-[#e8d8b9] border border-[#dfb15b]/30 hover:border-[#dfb15b] transition">
+        <button onclick="setDietFilter('veg')" id="filter-veg" class="diet-btn px-3 sm:px-3.5 py-1.5 rounded-full bg-[#09221b] text-[#e8d8b9] border border-[#dfb15b]/30 hover:border-[#dfb15b] transition">
           100% Veg
         </button>
-        <button onclick="setDietFilter('jain')" id="filter-jain" class="diet-btn px-3.5 py-1.5 rounded-full bg-[#09221b] text-[#e8d8b9] border border-[#dfb15b]/30 hover:border-[#dfb15b] transition">
+        <button onclick="setDietFilter('jain')" id="filter-jain" class="diet-btn px-3 sm:px-3.5 py-1.5 rounded-full bg-[#09221b] text-[#e8d8b9] border border-[#dfb15b]/30 hover:border-[#dfb15b] transition">
           🟡 Jain Available
         </button>
-        <button onclick="setDietFilter('special')" id="filter-special" class="diet-btn px-3.5 py-1.5 rounded-full bg-[#09221b] text-[#e8d8b9] border border-[#dfb15b]/30 hover:border-[#dfb15b] transition">
+        <button onclick="setDietFilter('special')" id="filter-special" class="diet-btn px-3 sm:px-3.5 py-1.5 rounded-full bg-[#09221b] text-[#e8d8b9] border border-[#dfb15b]/30 hover:border-[#dfb15b] transition">
           Chef's Specials
         </button>
-        <button onclick="setDietFilter('bestseller')" id="filter-bestseller" class="diet-btn px-3.5 py-1.5 rounded-full bg-[#09221b] text-[#e8d8b9] border border-[#dfb15b]/30 hover:border-[#dfb15b] transition">
+        <button onclick="setDietFilter('bestseller')" id="filter-bestseller" class="diet-btn px-3 sm:px-3.5 py-1.5 rounded-full bg-[#09221b] text-[#e8d8b9] border border-[#dfb15b]/30 hover:border-[#dfb15b] transition">
           Bestsellers
         </button>
-        <button onclick="setDietFilter('beverages')" id="filter-beverages" class="diet-btn px-3.5 py-1.5 rounded-full bg-[#09221b] text-[#e8d8b9] border border-[#dfb15b]/30 hover:border-[#dfb15b] transition">
+        <button onclick="setDietFilter('beverages')" id="filter-beverages" class="diet-btn px-3 sm:px-3.5 py-1.5 rounded-full bg-[#09221b] text-[#e8d8b9] border border-[#dfb15b]/30 hover:border-[#dfb15b] transition">
           Mocktails & Beverages
         </button>
-        <button onclick="setDietFilter('desserts')" id="filter-desserts" class="diet-btn px-3.5 py-1.5 rounded-full bg-[#09221b] text-[#e8d8b9] border border-[#dfb15b]/30 hover:border-[#dfb15b] transition">
+        <button onclick="setDietFilter('desserts')" id="filter-desserts" class="diet-btn px-3 sm:px-3.5 py-1.5 rounded-full bg-[#09221b] text-[#e8d8b9] border border-[#dfb15b]/30 hover:border-[#dfb15b] transition">
           Desserts
         </button>
       </div>
@@ -160,17 +162,17 @@
     </div>
   </section>
 
-  <!-- ================= 3. STICKY CATEGORY NAV RIBBON (White Background) ================= -->
-  <div class="sticky top-[61px] z-30 bg-white border-b border-[#e6e2d6] py-2 px-3 sm:px-6 shadow-sm">
-    <div class="max-w-6xl mx-auto flex items-center gap-2">
-      <button onclick="scrollCatNav(-200)" aria-label="Scroll left" class="w-8 h-8 rounded-full bg-[#f7f5ef] hover:bg-[#ffdaa9] text-[#0d2d24] flex items-center justify-center shrink-0 border border-[#e6e2d6] transition shadow-xs">
-        <i class="fa-solid fa-chevron-left text-xs"></i>
+  <!-- ================= 3. STICKY CATEGORY NAV RIBBON (White Background - Guaranteed min-w-0) ================= -->
+  <div class="sticky top-[52px] sm:top-[60px] z-30 bg-white border-b border-[#e6e2d6] py-2 px-2 sm:px-6 shadow-sm w-full overflow-hidden">
+    <div class="max-w-6xl mx-auto flex items-center gap-1.5 sm:gap-2 w-full">
+      <button onclick="scrollCatNav(-180)" aria-label="Scroll left" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#f7f5ef] hover:bg-[#ffdaa9] text-[#0d2d24] flex items-center justify-center shrink-0 border border-[#e6e2d6] transition shadow-xs">
+        <i class="fa-solid fa-chevron-left text-[10px] sm:text-xs"></i>
       </button>
-      <div class="overflow-x-auto no-scrollbar flex items-center gap-2 flex-1 scroll-smooth py-1" id="categoryNavContainer">
+      <div class="overflow-x-auto no-scrollbar flex items-center gap-2 flex-1 min-w-0 scroll-smooth py-1" id="categoryNavContainer">
         <!-- Injected via JS -->
       </div>
-      <button onclick="scrollCatNav(200)" aria-label="Scroll right" class="w-8 h-8 rounded-full bg-[#f7f5ef] hover:bg-[#ffdaa9] text-[#0d2d24] flex items-center justify-center shrink-0 border border-[#e6e2d6] transition shadow-xs">
-        <i class="fa-solid fa-chevron-right text-xs"></i>
+      <button onclick="scrollCatNav(180)" aria-label="Scroll right" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#f7f5ef] hover:bg-[#ffdaa9] text-[#0d2d24] flex items-center justify-center shrink-0 border border-[#e6e2d6] transition shadow-xs">
+        <i class="fa-solid fa-chevron-right text-[10px] sm:text-xs"></i>
       </button>
     </div>
   </div>
