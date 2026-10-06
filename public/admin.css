@@ -1,107 +1,96 @@
-/* Custom Admin Styles */
+/* Custom Admin Styles - Exact Match to Screenshots */
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap');
 
-.nav-btn {
-  color: #94a3b8;
-}
-.nav-btn:hover {
-  background-color: #1e293b;
-  color: #f8fafc;
-}
-.nav-btn.active {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  font-weight: 700;
+body {
+  background-color: #f7f5ef !important;
+  color: #1c2c26 !important;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Veg / Non-Veg badge indicators */
+/* Tab Navigation Buttons */
+.admin-tab-btn {
+  padding: 0.625rem 1.125rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #576560;
+  background-color: transparent;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.admin-tab-btn:hover {
+  background-color: #f1ede2;
+  color: #0d2d24;
+}
+
+.admin-tab-btn.active {
+  background-color: #0d2d24 !important;
+  color: #ffdaa9 !important;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(13, 45, 36, 0.2);
+}
+
+/* Veg Indicator */
 .veg-indicator {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 15px;
-  height: 15px;
-  border: 1.5px solid #10b981;
-  border-radius: 4px;
-  background-color: transparent;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid #16a34a;
+  border-radius: 3px;
+  background-color: #f0fdf4;
   padding: 1px;
+  shrink: 0;
 }
 .veg-indicator::after {
   content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: #16a34a;
+}
+
+/* Smooth Scrollbars */
+::-webkit-scrollbar {
   width: 6px;
   height: 6px;
-  border-radius: 50%;
-  background-color: #10b981;
 }
-
-.non-veg-indicator {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 15px;
-  height: 15px;
-  border: 1.5px solid #f43f5e;
-  border-radius: 4px;
-  background-color: transparent;
-  padding: 1px;
+::-webkit-scrollbar-track {
+  background: #f7f5ef;
 }
-.non-veg-indicator::after {
-  content: '';
-  width: 0;
-  height: 0;
-  border-left: 3.5px solid transparent;
-  border-right: 3.5px solid transparent;
-  border-bottom: 6px solid #f43f5e;
-}
-
-/* Status Badges */
-.status-badge {
-  padding: 4px 10px;
+::-webkit-scrollbar-thumb {
+  background: #dcd7c9;
   border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
 }
-.status-Pending {
-  background: rgba(234, 179, 8, 0.15);
-  color: #facc15;
-  border: 1px solid rgba(234, 179, 8, 0.3);
-}
-.status-Preparing {
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
-  border: 1px solid rgba(59, 130, 246, 0.3);
-}
-.status-Served {
-  background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
-}
-.status-Completed {
-  background: rgba(100, 116, 139, 0.15);
-  color: #94a3b8;
-  border: 1px solid rgba(100, 116, 139, 0.3);
-}
-.status-Cancelled {
-  background: rgba(244, 63, 94, 0.15);
-  color: #fb7185;
-  border: 1px solid rgba(244, 63, 94, 0.3);
+::-webkit-scrollbar-thumb:hover {
+  background: #c89b3c;
 }
 
-/* Toast animation */
-@keyframes adminSlideDown {
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Toast Animation */
+@keyframes toastSlide {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-12px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
+
 .animate-admin-toast {
-  animation: adminSlideDown 0.25s ease-out forwards;
+  animation: toastSlide 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
