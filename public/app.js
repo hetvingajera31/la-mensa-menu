@@ -279,6 +279,11 @@ function renderMenu() {
 
   // Filter items based on active criteria
   let filteredItems = state.items.filter(item => {
+    // If out of stock, completely hide from customer menu
+    if (item.isAvailable === false) {
+      return false;
+    }
+
     // Category match
     if (state.activeCategory !== 'all' && item.categoryId !== state.activeCategory) {
       return false;
