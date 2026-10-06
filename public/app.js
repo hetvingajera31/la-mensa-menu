@@ -191,6 +191,35 @@ function applySettingsToUI() {
   const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&color=09221b&bgcolor=ffffff&data=${encodeURIComponent(currentUrl)}`;
   if (qrImg) qrImg.src = qrApiUrl;
   if (qrLink) qrLink.href = qrApiUrl;
+
+  // Restaurant Brand Logo (Menu Header, Hero Crest, Footer)
+  const logoUrl = s.logoUrl;
+  const headerLogoEl = document.getElementById('headerLogoContainer');
+  if (headerLogoEl) {
+    if (logoUrl) {
+      headerLogoEl.innerHTML = `<img src="${logoUrl}" alt="${s.restaurantName || 'Logo'}" class="w-full h-full object-cover rounded-xl" />`;
+    } else {
+      headerLogoEl.innerHTML = `<i class="fa-solid fa-utensils"></i>`;
+    }
+  }
+
+  const heroLogoEl = document.getElementById('heroLogoContainer');
+  if (heroLogoEl) {
+    if (logoUrl) {
+      heroLogoEl.innerHTML = `<img src="${logoUrl}" alt="${s.restaurantName || 'Logo'}" class="w-full h-full object-cover rounded-full" />`;
+    } else {
+      heroLogoEl.innerHTML = `<i class="fa-solid fa-utensils text-[#dfb15b] text-lg sm:text-xl"></i>`;
+    }
+  }
+
+  const footerLogoEl = document.getElementById('footerLogoContainer');
+  if (footerLogoEl) {
+    if (logoUrl) {
+      footerLogoEl.innerHTML = `<img src="${logoUrl}" alt="${s.restaurantName || 'Logo'}" class="w-full h-full object-cover rounded-2xl" />`;
+    } else {
+      footerLogoEl.innerHTML = `<i class="fa-solid fa-utensils"></i>`;
+    }
+  }
 }
 
 // Setup Event Listeners
@@ -460,6 +489,12 @@ function renderDishCard(item, currency) {
           ${item.isSpicy || item.spiceLevel >= 2 ? `
             <span class="text-[10px] font-bold text-rose-600">🌶️ Spicy</span>
           ` : ''}
+
+          ${(item.customOptions && Array.isArray(item.customOptions)) ? item.customOptions.map(opt => `
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-stone-100 text-[#0d2d24] border border-stone-300">
+              ${opt}
+            </span>
+          `).join('') : ''}
         </div>
 
         <button onclick="openDishModal('${item.id}'); event.stopPropagation();" class="text-xs font-bold text-[#0d2d24] group-hover:text-[#b8860b] flex items-center gap-1 shrink-0 transition">
@@ -512,6 +547,11 @@ function openDishModal(itemId) {
   }
   if (!item.isAvailable) {
     badgesHtml += '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-600 text-white shadow">Sold Out Today</span>';
+  }
+  if (item.customOptions && Array.isArray(item.customOptions)) {
+    item.customOptions.forEach(opt => {
+      badgesHtml += `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-stone-100 text-[#0d2d24] border border-stone-300 shadow">${opt}</span>`;
+    });
   }
   document.getElementById('modalBadges').innerHTML = badgesHtml;
 

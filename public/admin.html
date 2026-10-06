@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
@@ -40,16 +40,67 @@
 </head>
 <body class="bg-[#f7f5ef] text-[#1c2c26] min-h-screen antialiased flex flex-col selection:bg-[#dfb15b] selection:text-[#0d2d24]">
 
+  <!-- ================= 0. ADMIN LOCK SCREEN OVERLAY (Matches Screenshot media_1791290670547.png) ================= -->
+  <div id="adminLockScreen" class="fixed inset-0 z-50 bg-[#07211a] flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-8 sm:p-10 shadow-2xl border border-[#e6e2d6] text-center relative animate-fade-in">
+      <!-- Centered Lock Badge -->
+      <div class="w-16 h-16 rounded-full bg-[#0d2d24] border-2 border-[#dfb15b] flex items-center justify-center mx-auto mb-4 shadow-md">
+        <i class="fa-solid fa-lock text-2xl text-[#dfb15b]"></i>
+      </div>
+
+      <!-- Title & Subtitle -->
+      <h2 class="text-2xl font-serif font-bold text-[#0d2d24] mb-1">
+        LA MENSA Admin Panel
+      </h2>
+      <p class="text-xs text-stone-500 mb-6">
+        Enter Admin Password to manage dishes and settings
+      </p>
+
+      <!-- Password Form -->
+      <form id="adminLoginForm" onsubmit="handleAdminLogin(event)" class="space-y-4">
+        <div>
+          <input
+            type="password"
+            id="adminPasswordInput"
+            placeholder="Admin password"
+            class="w-full px-4 py-3 rounded-xl border border-[#dfb15b] text-center text-sm font-semibold tracking-wider outline-none focus:ring-2 focus:ring-[#dfb15b] text-[#0d2d24] bg-white placeholder-stone-400 shadow-inner"
+            autocomplete="current-password"
+            required
+          />
+        </div>
+        <p id="adminLoginError" class="text-xs text-rose-600 font-semibold hidden"></p>
+        <button
+          type="submit"
+          id="unlockDashboardBtn"
+          class="w-full py-3.5 rounded-xl bg-[#c89843] hover:bg-[#b8860b] text-[#0d2d24] font-bold text-sm shadow-md transition transform active:scale-98"
+        >
+          Unlock Dashboard
+        </button>
+      </form>
+
+      <!-- Footer Note -->
+      <div class="mt-8 pt-4 text-stone-400 text-[11px] flex items-center justify-between border-t border-stone-100">
+        <span>Password verification is secured.</span>
+        <a href="/" class="text-[#0d2d24] hover:text-[#b8860b] font-semibold transition">← View Front Page</a>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= 1. TOP HEADER (Exact Match to Screenshots - Fully Responsive) ================= -->
   <header class="sticky top-0 z-40 bg-[#09221b] border-b border-[#dfb15b]/25 shadow-md w-full overflow-hidden">
     <div class="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4">
       
-      <!-- Left: Front Page Back Button & Title -->
-      <div class="flex items-center gap-2 sm:gap-4 min-w-0">
+      <!-- Left: Front Page Back Button, Logo & Title -->
+      <div class="flex items-center gap-2 sm:gap-3 min-w-0">
         <a href="/" class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#0d2d24] text-[#ffdaa9] border border-[#dfb15b]/30 text-xs font-semibold hover:bg-[#153f33] transition flex items-center gap-1.5 shadow-sm shrink-0">
           <i class="fa-solid fa-arrow-left text-[11px]"></i>
           <span class="hidden sm:inline">Front Page</span>
         </a>
+
+        <!-- Admin Header Logo Emblem -->
+        <div id="adminHeaderLogoContainer" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border border-[#dfb15b]/40 bg-[#0d2d24] flex items-center justify-center text-[#dfb15b] text-sm shadow-sm shrink-0 overflow-hidden">
+          <i class="fa-solid fa-utensils"></i>
+        </div>
 
         <div class="min-w-0">
           <h1 class="font-serif font-bold text-sm sm:text-lg text-[#ffdaa9] tracking-wider uppercase leading-none truncate">
@@ -78,8 +129,8 @@
     </div>
   </header>
 
-  <!-- ================= 2. MAIN CONTAINER ================= -->
-  <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex-1 space-y-6">
+  <!-- ================= 2. MAIN CONTAINER (Abundant Bottom Clearance for Mobile) ================= -->
+  <div class="max-w-7xl w-full mx-auto px-3 sm:px-6 pt-5 pb-36 sm:pb-28 flex-1 space-y-6">
 
     <!-- Top 4 Metrics Cards (Matches All 5 Screenshots) -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -288,6 +339,28 @@
 
         <form id="profileForm" onsubmit="saveProfileSettings(event)" class="space-y-5">
           
+          <!-- Section 0: Restaurant Brand Logo (Appears Everywhere) -->
+          <div class="p-4 sm:p-5 rounded-2xl bg-[#faf9f5] border border-[#e6e2d6] space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h4 class="text-xs font-bold text-[#0d2d24] uppercase tracking-wider">Restaurant Brand Logo</h4>
+                <p class="text-[11px] text-stone-500 mt-0.5">Appears across Menu Header, Hero crest, Menu Footer, and Admin panel.</p>
+              </div>
+              <div id="profLogoPreview" class="w-12 h-12 rounded-xl border border-[#dfb15b]/50 bg-[#0d2d24] flex items-center justify-center text-[#dfb15b] overflow-hidden shrink-0 shadow-sm">
+                <i class="fa-solid fa-utensils text-base"></i>
+              </div>
+            </div>
+            <div class="flex flex-col sm:flex-row items-center gap-2">
+              <input type="text" id="profLogoUrl" placeholder="https://i.ibb.co/... or logo image URL" class="w-full sm:flex-1 px-4 py-2.5 rounded-xl bg-white border border-[#dcd7c9] text-xs font-medium text-[#0d2d24] outline-none" />
+              <label class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#0d2d24] hover:bg-[#153f33] text-[#ffdaa9] font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition shrink-0">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span>Upload Logo</span>
+                <input type="file" id="profLogoFileInput" accept="image/*" class="hidden" onchange="uploadLogoToImgBB(event)" />
+              </label>
+            </div>
+            <span id="profLogoUploadStatus" class="text-[11px] text-emerald-700 font-semibold block"></span>
+          </div>
+
           <!-- Row 1: Restaurant Name & Subtitle -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -628,6 +701,14 @@
 
     </section>
 
+    <!-- ================= ADMIN FOOTER ================= -->
+    <footer class="mt-14 pt-8 pb-10 border-t border-[#e6e2d6] text-center text-xs text-stone-500">
+      <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-stone-500 px-4">
+        <p class="font-bold text-[#0d2d24]">LA MENSA Live Admin Panel • Connected to Firebase Cloud</p>
+        <p class="text-[11px] text-stone-400">© 2026 La Mensa Multi Cuisine Restaurant. All rights reserved.</p>
+      </div>
+    </footer>
+
   </div>
 
   <!-- ================= DISH MODAL (ADD / EDIT) ================= -->
@@ -702,24 +783,12 @@
           <textarea id="dishFormDesc" rows="3" class="w-full px-3.5 py-2.5 rounded-xl border border-[#dcd7c9] outline-none text-[#0d2d24]"></textarea>
         </div>
 
-        <!-- Dietary Checkboxes -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-          <label class="flex items-center gap-2 p-2 rounded-xl bg-[#faf9f5] border border-[#e6e2d6] cursor-pointer">
-            <input type="checkbox" id="dishFormIsAvailable" checked class="rounded text-[#0d2d24]" />
-            <span class="font-bold text-emerald-800">In Stock</span>
-          </label>
-          <label class="flex items-center gap-2 p-2 rounded-xl bg-[#faf9f5] border border-[#e6e2d6] cursor-pointer">
-            <input type="checkbox" id="dishFormIsJain" class="rounded text-[#0d2d24]" />
-            <span class="font-semibold text-amber-900">Jain Available</span>
-          </label>
-          <label class="flex items-center gap-2 p-2 rounded-xl bg-[#faf9f5] border border-[#e6e2d6] cursor-pointer">
-            <input type="checkbox" id="dishFormIsSpecial" class="rounded text-[#0d2d24]" />
-            <span class="font-semibold text-[#0d2d24]">Chef's Special</span>
-          </label>
-          <label class="flex items-center gap-2 p-2 rounded-xl bg-[#faf9f5] border border-[#e6e2d6] cursor-pointer">
-            <input type="checkbox" id="dishFormIsBestseller" class="rounded text-[#0d2d24]" />
-            <span class="font-semibold text-emerald-800">Popular</span>
-          </label>
+        <!-- Dietary Checkboxes & Dynamic Custom Dish Options -->
+        <div>
+          <label class="block font-bold text-stone-700 mb-1.5">Dish Options & Badges</label>
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 pt-1" id="dishModalOptionsContainer">
+            <!-- Injected via renderDishModalOptions() -->
+          </div>
         </div>
 
         <!-- Modal Actions -->

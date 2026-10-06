@@ -72,8 +72,8 @@
   <main class="max-w-4xl w-full mx-auto px-4 sm:px-6 py-4 flex-1 flex flex-col items-center justify-center text-center">
     
     <!-- Ornate Brand Crest -->
-    <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 border-[#dfb15b]/70 bg-[#0d2d24] flex flex-col items-center justify-center shadow-2xl mb-4 relative p-2 shadow-[#000000]/50">
-      <div class="w-full h-full rounded-full border border-[#dfb15b]/40 flex flex-col items-center justify-center bg-gradient-to-b from-[#12392e] to-[#0a231c]">
+    <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 border-[#dfb15b]/70 bg-[#0d2d24] flex flex-col items-center justify-center shadow-2xl mb-4 relative p-1.5 shadow-[#000000]/50 overflow-hidden">
+      <div id="frontCrestInner" class="w-full h-full rounded-full border border-[#dfb15b]/40 flex flex-col items-center justify-center bg-gradient-to-b from-[#12392e] to-[#0a231c] overflow-hidden">
         <i class="fa-solid fa-utensils text-[#dfb15b] text-xl sm:text-2xl mb-0.5"></i>
         <span class="text-[7px] sm:text-[8px] font-bold tracking-widest text-[#ffdaa9] uppercase">LA MENSA</span>
       </div>
@@ -223,6 +223,21 @@ END:VCARD`;
       link.click();
       document.body.removeChild(link);
     }
+
+    // Fetch live logo & settings
+    (async function initFrontPageSettings() {
+      try {
+        const fbUrl = 'https://la-mensa-menu-default-rtdb.firebaseio.com/menu.json';
+        const res = await fetch(`${fbUrl}?t=${Date.now()}`);
+        const data = await res.json();
+        if (data && data.settings && data.settings.logoUrl) {
+          const crestInner = document.getElementById('frontCrestInner');
+          if (crestInner) {
+            crestInner.innerHTML = `<img src="${data.settings.logoUrl}" alt="La Mensa" class="w-full h-full object-cover rounded-full" />`;
+          }
+        }
+      } catch (e) {}
+    })();
   </script>
 </body>
 </html>

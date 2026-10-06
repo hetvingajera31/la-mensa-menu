@@ -31,9 +31,55 @@ const adminState = {
 };
 
 let firebaseAdminRtdb = null;
+const DEFAULT_ADMIN_PASS = 'lamensagroup';
+
+// Check Admin Authentication on Load
+function checkAdminAuth() {
+  const isAuthed = sessionStorage.getItem('lamensa_admin_auth') === 'true';
+  const lockScreen = document.getElementById('adminLockScreen');
+  if (!lockScreen) return;
+  if (isAuthed) {
+    lockScreen.classList.add('hidden');
+  } else {
+    lockScreen.classList.remove('hidden');
+    const passInput = document.getElementById('adminPasswordInput');
+    if (passInput) {
+      passInput.value = '';
+      setTimeout(() => passInput.focus(), 150);
+    }
+  }
+}
+
+// Handle Admin Unlock Submit
+function handleAdminLogin(e) {
+  if (e) e.preventDefault();
+  const passInput = document.getElementById('adminPasswordInput');
+  const errEl = document.getElementById('adminLoginError');
+  const entered = (passInput ? passInput.value : '').trim();
+
+  const customPass = adminState.settings && adminState.settings.adminPassword;
+  if (entered === DEFAULT_ADMIN_PASS || (customPass && entered === customPass)) {
+    sessionStorage.setItem('lamensa_admin_auth', 'true');
+    if (errEl) errEl.classList.add('hidden');
+    const lockScreen = document.getElementById('adminLockScreen');
+    if (lockScreen) lockScreen.classList.add('hidden');
+    showAdminToast('Dashboard Unlocked. Welcome!', 'success');
+  } else {
+    if (errEl) {
+      errEl.textContent = 'Incorrect password. Please try again.';
+      errEl.classList.remove('hidden');
+    }
+    if (passInput) {
+      passInput.classList.add('border-rose-500');
+      setTimeout(() => passInput.classList.remove('border-rose-500'), 1500);
+      passInput.focus();
+    }
+  }
+}
 
 // Initialize Admin on DOM Ready
 document.addEventListener('DOMContentLoaded', () => {
+  checkAdminAuth();
   fetchAdminData();
   setupEventListeners();
   initFirebaseLiveListener();
@@ -355,15 +401,58 @@ async function toggleItemStock(itemId) {
   await pushStateToFirebase();
 }
 
+// Render Core and Dynamic Custom Dish Options inside Add/Edit Dish Modal
+function renderDishModalOptions(item) {
+  const container = document.getElementById('dishModalOptionsContainer');
+  if (!container) return;
+
+  const isAvailable = item ? (item.isAvailable !== false) : true;
+  const isJain = item ? Boolean(item.isJain) : false;
+  const isSpecial = item ? Boolean(item.isChefSpecial) : false;
+  const isBestseller = item ? Boolean(item.isBestseller) : false;
+  const customOpts = (item && Array.isArray(item.customOptions)) ? item.customOptions : [];
+
+  let html = `
+    <label class="flex items-center gap-2 p-2 rounded-xl bg-[#faf9f5] border border-[#e6e2d6] cursor-pointer hover:border-[#dfb15b] transition">
+      <input type="checkbox" id="dishFormIsAvailable" ${isAvailable ? 'checked' : ''} class="rounded text-[#0d2d24]" />
+      <span class="font-bold text-emerald-800 text-xs">In Stock</span>
+    </label>
+    <label class="flex items-center gap-2 p-2 rounded-xl bg-[#faf9f5] border border-[#e6e2d6] cursor-pointer hover:border-[#dfb15b] transition">
+      <input type="checkbox" id="dishFormIsJain" ${isJain ? 'checked' : ''} class="rounded text-[#0d2d24]" />
+      <span class="font-semibold text-amber-900 text-xs">Jain Available</span>
+    </label>
+    <label class="flex items-center gap-2 p-2 rounded-xl bg-[#faf9f5] border border-[#e6e2d6] cursor-pointer hover:border-[#dfb15b] transition">
+      <input type="checkbox" id="dishFormIsSpecial" ${isSpecial ? 'checked' : ''} class="rounded text-[#0d2d24]" />
+      <span class="font-semibold text-[#0d2d24] text-xs">Chef's Special</span>
+    </label>
+    <label class="flex items-center gap-2 p-2 rounded-xl bg-[#faf9f5] border border-[#e6e2d6] cursor-pointer hover:border-[#dfb15b] transition">
+      <input type="checkbox" id="dishFormIsBestseller" ${isBestseller ? 'checked' : ''} class="rounded text-[#0d2d24]" />
+      <span class="font-semibold text-emerald-800 text-xs">Popular</span>
+    </label>
+  `;
+
+  // Dynamically append options from adminState.customDishOptions
+  if (adminState.customDishOptions && Array.isArray(adminState.customDishOptions)) {
+    adminState.customDishOptions.forEach(opt => {
+      const isChecked = customOpts.includes(opt);
+      html += `
+        <label class="flex items-center gap-2 p-2 rounded-xl bg-[#faf9f5] border border-[#e6e2d6] cursor-pointer hover:border-[#dfb15b] transition">
+          <input type="checkbox" data-custom-opt="${opt}" class="dish-custom-opt-cb rounded text-[#0d2d24]" ${isChecked ? 'checked' : ''} />
+          <span class="font-semibold text-[#0d2d24] text-xs truncate" title="${opt}">${opt}</span>
+        </label>
+      `;
+    });
+  }
+
+  container.innerHTML = html;
+}
+
 // Open Add Dish Modal
 function openAddDishModal() {
   document.getElementById('dishModalTitle').textContent = 'Add New Dish';
   document.getElementById('dishFormId').value = '';
   document.getElementById('dishForm').reset();
-  document.getElementById('dishFormIsAvailable').checked = true;
-  document.getElementById('dishFormIsJain').checked = false;
-  document.getElementById('dishFormIsSpecial').checked = false;
-  document.getElementById('dishFormIsBestseller').checked = false;
+  renderDishModalOptions(null);
   document.getElementById('dishImageUploadStatus').textContent = '';
   document.getElementById('dishModal').classList.remove('hidden');
 }
@@ -383,10 +472,7 @@ function openEditDishModal(itemId) {
   document.getElementById('dishFormPrepTime').value = item.prepTime || '';
   document.getElementById('dishFormImage').value = item.image || '';
   document.getElementById('dishFormDesc').value = item.description || '';
-  document.getElementById('dishFormIsAvailable').checked = item.isAvailable !== false;
-  document.getElementById('dishFormIsJain').checked = Boolean(item.isJain);
-  document.getElementById('dishFormIsSpecial').checked = Boolean(item.isChefSpecial);
-  document.getElementById('dishFormIsBestseller').checked = Boolean(item.isBestseller);
+  renderDishModalOptions(item);
   document.getElementById('dishImageUploadStatus').textContent = '';
   
   document.getElementById('dishModal').classList.remove('hidden');
@@ -399,6 +485,13 @@ function closeDishModal() {
 async function saveDish(e) {
   e.preventDefault();
   const id = document.getElementById('dishFormId').value;
+  const selectedCustomOptions = Array.from(document.querySelectorAll('.dish-custom-opt-cb:checked')).map(cb => cb.dataset.customOpt);
+
+  const isAvailEl = document.getElementById('dishFormIsAvailable');
+  const isJainEl = document.getElementById('dishFormIsJain');
+  const isSpecialEl = document.getElementById('dishFormIsSpecial');
+  const isBestsellerEl = document.getElementById('dishFormIsBestseller');
+
   const payload = {
     id: id || ('item-' + Date.now()),
     name: document.getElementById('dishFormName').value.trim(),
@@ -410,10 +503,11 @@ async function saveDish(e) {
     image: document.getElementById('dishFormImage').value.trim() || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
     description: document.getElementById('dishFormDesc').value.trim(),
     isVeg: true,
-    isAvailable: document.getElementById('dishFormIsAvailable').checked,
-    isJain: document.getElementById('dishFormIsJain').checked,
-    isChefSpecial: document.getElementById('dishFormIsSpecial').checked,
-    isBestseller: document.getElementById('dishFormIsBestseller').checked
+    isAvailable: isAvailEl ? isAvailEl.checked : true,
+    isJain: isJainEl ? isJainEl.checked : false,
+    isChefSpecial: isSpecialEl ? isSpecialEl.checked : false,
+    isBestseller: isBestsellerEl ? isBestsellerEl.checked : false,
+    customOptions: selectedCustomOptions
   };
 
   if (id) {
@@ -472,22 +566,37 @@ function renderCategoriesGrid() {
           </div>
         </div>
 
-        <!-- Right: Move Controls, Visibility & Actions -->
+        <!-- Right: Move Controls [Input] [Move] [↑] [↓], Shown Badge, Edit, Delete -->
         <div class="flex items-center gap-1.5 shrink-0">
           
-          <!-- Move Order Pill -->
-          <div class="flex items-center gap-0.5 bg-[#f7f5ef] border border-[#e6e2d6] rounded-xl px-2 py-1 text-xs font-semibold text-stone-600">
-            <span class="mr-1">${index + 1}</span>
-            <button onclick="moveCategory('${cat.id}', -1)" title="Move up" class="p-1 hover:text-[#0d2d24]">
+          <!-- Move Order Box [ Number Input ] [ Move Button ] [ ↑ ] [ ↓ ] (Matches Screenshot media_1791288676413.png) -->
+          <div class="flex items-center gap-1 bg-[#f7f5ef] border border-[#e6e2d6] rounded-xl p-1 text-xs">
+            <input
+              type="number"
+              id="catPosInput-${cat.id}"
+              value="${index + 1}"
+              min="1"
+              max="${adminState.categories.length}"
+              class="w-9 h-7 text-center font-bold text-xs text-[#0d2d24] bg-white border border-[#dcd7c9] rounded-lg outline-none focus:border-[#dfb15b]"
+              onkeydown="if(event.key==='Enter'){event.preventDefault(); handleCategoryMoveInput('${cat.id}');}"
+            />
+            <button
+              onclick="handleCategoryMoveInput('${cat.id}')"
+              title="Move category to this position"
+              class="px-2 py-1 rounded-lg bg-[#0d2d24] hover:bg-[#153f33] text-[#ffdaa9] font-bold text-[10px] transition shadow-xs"
+            >
+              Move
+            </button>
+            <button onclick="moveCategory('${cat.id}', -1)" title="Move up" class="p-1 hover:text-[#0d2d24] text-stone-500">
               <i class="fa-solid fa-arrow-up text-[10px]"></i>
             </button>
-            <button onclick="moveCategory('${cat.id}', 1)" title="Move down" class="p-1 hover:text-[#0d2d24]">
+            <button onclick="moveCategory('${cat.id}', 1)" title="Move down" class="p-1 hover:text-[#0d2d24] text-stone-500">
               <i class="fa-solid fa-arrow-down text-[10px]"></i>
             </button>
           </div>
 
           <!-- Shown Pill -->
-          <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-300 text-[11px] font-bold">
+          <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-300 text-[11px] font-bold hidden sm:inline-block">
             👁️ Shown
           </span>
 
@@ -508,7 +617,36 @@ function renderCategoriesGrid() {
   }).join('');
 }
 
-// Move Category Order (Up/Down)
+// Handle Move Category Input from card
+function handleCategoryMoveInput(catId) {
+  const inputEl = document.getElementById(`catPosInput-${catId}`);
+  if (!inputEl) return;
+  const targetPos = parseInt(inputEl.value, 10);
+  if (isNaN(targetPos)) return;
+  moveCategoryToPosition(catId, targetPos);
+}
+
+// Move Category to specific 1-based index (e.g. typing 5 moves it to 5th position)
+async function moveCategoryToPosition(catId, targetPos) {
+  const curIdx = adminState.categories.findIndex(c => c.id === catId);
+  if (curIdx === -1) return;
+
+  let targetIdx = targetPos - 1;
+  if (targetIdx < 0) targetIdx = 0;
+  if (targetIdx >= adminState.categories.length) targetIdx = adminState.categories.length - 1;
+
+  if (curIdx === targetIdx) return;
+
+  const [movedCat] = adminState.categories.splice(curIdx, 1);
+  adminState.categories.splice(targetIdx, 0, movedCat);
+
+  renderCategoriesGrid();
+  populateCategoryDropdowns();
+  showAdminToast(`"${movedCat.name}" moved to position ${targetIdx + 1}!`, 'success');
+  await pushStateToFirebase();
+}
+
+// Move Category Order (Up/Down step)
 async function moveCategory(catId, delta) {
   const idx = adminState.categories.findIndex(c => c.id === catId);
   if (idx === -1) return;
@@ -597,6 +735,9 @@ async function deleteCategory(catId, name, itemCount) {
 // 6. TAB 3: RESTAURANT PROFILE & WHATSAPP (Screenshot 2)
 function populateProfileForm() {
   const s = adminState.settings;
+  if (document.getElementById('profLogoUrl')) document.getElementById('profLogoUrl').value = s.logoUrl || '';
+  updateAdminLogoUI(s.logoUrl);
+
   if (document.getElementById('profRestName')) document.getElementById('profRestName').value = s.restaurantName || 'LA MENSA';
   if (document.getElementById('profSubtitle')) document.getElementById('profSubtitle').value = s.subtitle || 'MULTI CUISINE';
   if (document.getElementById('profTagline')) document.getElementById('profTagline').value = s.tagline || 'There is no sincerer love than the love of food.';
@@ -689,7 +830,7 @@ function renderCustomTags() {
   `).join('');
 }
 
-function addCustomTag() {
+async function addCustomTag() {
   const input = document.getElementById('newCustomTagInput');
   const val = input.value.trim();
   if (!val) return;
@@ -697,15 +838,25 @@ function addCustomTag() {
   adminState.customDishOptions.push(val);
   input.value = '';
   renderCustomTags();
+  await pushStateToFirebase();
+  showAdminToast(`Custom option "${val}" added!`, 'success');
 }
 
-function removeCustomTag(tag) {
+async function removeCustomTag(tag) {
   adminState.customDishOptions = adminState.customDishOptions.filter(t => t !== tag);
   renderCustomTags();
+  await pushStateToFirebase();
+  showAdminToast(`Custom option "${tag}" removed.`, 'info');
 }
 
 async function saveProfileSettings(e) {
   e.preventDefault();
+
+  if (document.getElementById('profLogoUrl')) {
+    adminState.settings.logoUrl = document.getElementById('profLogoUrl').value.trim();
+    updateAdminLogoUI(adminState.settings.logoUrl);
+  }
+
   adminState.settings.restaurantName = document.getElementById('profRestName').value.trim();
   adminState.settings.subtitle = document.getElementById('profSubtitle').value.trim();
   adminState.settings.tagline = document.getElementById('profTagline').value.trim();
@@ -718,8 +869,14 @@ async function saveProfileSettings(e) {
   adminState.settings.wifiPassword = document.getElementById('profWifiPass').value.trim();
   adminState.settings.announcement = document.getElementById('profAnnouncement').value.trim();
 
+  const newPass = document.getElementById('profPassword') ? document.getElementById('profPassword').value.trim() : '';
+  if (newPass && newPass.length >= 6) {
+    adminState.settings.adminPassword = newPass;
+    showAdminToast('Admin password updated successfully!', 'info');
+  }
+
   await pushStateToFirebase();
-  showAdminToast('Restaurant profile saved to cloud!', 'success');
+  showAdminToast('Restaurant profile & logo saved to cloud!', 'success');
 }
 
 // 7. TAB 4: MANAGE FRONT PAGE (Screenshot 4)
@@ -941,10 +1098,67 @@ async function handleImageUpload(e) {
   }
 }
 
-// Lock Admin Session
+// Lock Admin Session (Brings back the lock screen on this page)
 function lockAdminSession() {
-  const choice = confirm('Lock admin session and return to Front Page?');
-  if (choice) window.location.href = '/';
+  sessionStorage.removeItem('lamensa_admin_auth');
+  const lockScreen = document.getElementById('adminLockScreen');
+  if (lockScreen) {
+    lockScreen.classList.remove('hidden');
+    const passInput = document.getElementById('adminPasswordInput');
+    const errEl = document.getElementById('adminLoginError');
+    if (errEl) errEl.classList.add('hidden');
+    if (passInput) {
+      passInput.value = '';
+      setTimeout(() => passInput.focus(), 150);
+    }
+  }
+  showAdminToast('Admin screen locked.', 'info');
+}
+
+// Logo Management UI Handlers
+function updateAdminLogoUI(url) {
+  const adminLogoEl = document.getElementById('adminHeaderLogoContainer');
+  const previewEl = document.getElementById('profLogoPreview');
+  if (url) {
+    if (adminLogoEl) adminLogoEl.innerHTML = `<img src="${url}" alt="Logo" class="w-full h-full object-cover rounded-xl" />`;
+    if (previewEl) previewEl.innerHTML = `<img src="${url}" alt="Logo" class="w-full h-full object-cover rounded-xl" />`;
+  } else {
+    if (adminLogoEl) adminLogoEl.innerHTML = `<i class="fa-solid fa-utensils"></i>`;
+    if (previewEl) previewEl.innerHTML = `<i class="fa-solid fa-utensils text-base"></i>`;
+  }
+}
+
+async function uploadLogoToImgBB(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const statusEl = document.getElementById('profLogoUploadStatus');
+  const urlInput = document.getElementById('profLogoUrl');
+  const key = window.IMGBB_API_KEY || '1c4e7f2fb1d5bcd0570a5894a27546db';
+
+  if (statusEl) statusEl.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Uploading logo to ImgBB...';
+
+  try {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const res = await fetch(`https://api.imgbb.com/1/upload?key=${key}`, {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if (data.success) {
+      const url = data.data.display_url || data.data.url;
+      if (urlInput) urlInput.value = url;
+      updateAdminLogoUI(url);
+      if (statusEl) statusEl.innerHTML = '<span class="text-emerald-600 font-bold">✓ Logo uploaded successfully! Click "Update Draft & Save" below.</span>';
+      showAdminToast('Restaurant logo uploaded!', 'success');
+    } else {
+      throw new Error(data.error ? data.error.message : 'Upload failed');
+    }
+  } catch (err) {
+    if (statusEl) statusEl.innerHTML = '<span class="text-rose-600">Upload failed: ' + err.message + '</span>';
+  }
 }
 
 // Toast System
