@@ -184,11 +184,11 @@ function applySettingsToUI() {
     if (wifiPassEl) wifiPassEl.textContent = s.wifiPassword;
   }
 
-  // QR Code Image
+  // QR Code Image (links to /menu)
   const qrImg = document.getElementById('menuQrImage');
   const qrLink = document.getElementById('downloadQrLink');
-  const currentUrl = window.location.origin;
-  const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&color=0e2a22&bgcolor=ffffff&data=${encodeURIComponent(currentUrl)}`;
+  const currentUrl = `${window.location.origin}/menu`;
+  const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&color=09221b&bgcolor=ffffff&data=${encodeURIComponent(currentUrl)}`;
   if (qrImg) qrImg.src = qrApiUrl;
   if (qrLink) qrLink.href = qrApiUrl;
 }
@@ -211,8 +211,6 @@ function setupEventListeners() {
   window.addEventListener('click', (e) => {
     const dishModal = document.getElementById('dishModal');
     if (e.target === dishModal) closeDishModal();
-    const wifiModal = document.getElementById('wifiModal');
-    if (e.target === wifiModal) closeWifiModal();
     const qrModal = document.getElementById('qrModal');
     if (e.target === qrModal) closeQrModal();
   });
@@ -221,7 +219,6 @@ function setupEventListeners() {
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       closeDishModal();
-      closeWifiModal();
       closeQrModal();
     }
   });
@@ -232,28 +229,42 @@ function clearSearch() {
   if (searchInput) {
     searchInput.value = '';
     state.searchQuery = '';
-    document.getElementById('clearSearchBtn').classList.add('hidden');
+    const clearBtn = document.getElementById('clearSearchBtn');
+    if (clearBtn) clearBtn.classList.add('hidden');
     renderMenu();
   }
 }
 
-// Category Pills Navigation
+// Category Navigation Ribbon Scrolling
+function scrollCatNav(delta) {
+  const container = document.getElementById('categoryNavContainer');
+  if (container) {
+    container.scrollBy({ left: delta, behavior: 'smooth' });
+  }
+}
+
+// Category Pills Navigation with Item Counts (Exact Match to Image 2)
 function renderCategoryNav() {
   const container = document.getElementById('categoryNavContainer');
   if (!container) return;
 
+  const availableItems = state.items.filter(i => i.isAvailable !== false);
+  const totalCount = availableItems.length;
+
   let html = `
-    <button onclick="filterByCategory('all')" class="cat-pill ${state.activeCategory === 'all' ? 'active' : 'bg-white text-stone-700 border border-[#e6e2d6] hover:bg-[#ffdaa9]/30'} px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition whitespace-nowrap shadow-sm">
-      <span>✨ All</span>
+    <button onclick="filterByCategory('all')" class="cat-pill ${state.activeCategory === 'all' ? 'active bg-[#09221b] text-[#ffdaa9] font-bold border border-[#dfb15b]/40 shadow-sm' : 'bg-white text-stone-700 border border-[#e6e2d6] hover:bg-[#ffdaa9]/20 hover:border-[#dfb15b] font-semibold'} px-4 py-1.5 rounded-full text-xs whitespace-nowrap transition shadow-xs">
+      <span>All Dishes (${totalCount})</span>
     </button>
   `;
 
   state.categories.forEach(cat => {
+    const catItemsCount = availableItems.filter(i => i.categoryId === cat.id).length;
+    if (catItemsCount === 0) return; // Do not show empty categories
+
     const isActive = state.activeCategory === cat.id;
     html += `
-      <button onclick="filterByCategory('${cat.id}')" class="cat-pill ${isActive ? 'active' : 'bg-white text-stone-700 border border-[#e6e2d6] hover:bg-[#ffdaa9]/30'} px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition whitespace-nowrap shadow-sm">
-        <span>${cat.icon || '🍽️'}</span>
-        <span>${cat.name}</span>
+      <button onclick="filterByCategory('${cat.id}')" class="cat-pill ${isActive ? 'active bg-[#09221b] text-[#ffdaa9] font-bold border border-[#dfb15b]/40 shadow-sm' : 'bg-white text-stone-700 border border-[#e6e2d6] hover:bg-[#ffdaa9]/20 hover:border-[#dfb15b] font-semibold'} px-4 py-1.5 rounded-full text-xs whitespace-nowrap transition shadow-xs">
+        <span>${cat.name} (${catItemsCount})</span>
       </button>
     `;
   });
@@ -274,20 +285,20 @@ function filterByCategory(categoryId) {
   }
 }
 
-// Dietary Filters (All, Jain Available, Chef's Special, Spicy Delights)
+// Dietary Quick Filters (Exact Match to Image 2 chips)
 function setDietFilter(filterType) {
   state.activeDietFilter = filterType;
 
   // Update button visual states
   document.querySelectorAll('.diet-btn').forEach(btn => {
-    btn.classList.remove('bg-[#dfb15b]', 'text-[#0e2a22]', 'font-bold', 'border-[#dfb15b]');
-    btn.classList.add('bg-white', 'text-[#1c2c26]', 'border-[#dcd7c9]');
+    btn.classList.remove('bg-[#ffdaa9]', 'text-[#0d2d24]', 'font-bold', 'border-[#dfb15b]', 'shadow-sm');
+    btn.classList.add('bg-[#09221b]', 'text-[#e8d8b9]', 'border-[#dfb15b]/30');
   });
 
   const activeBtn = document.getElementById(`filter-${filterType}`);
   if (activeBtn) {
-    activeBtn.classList.remove('bg-white', 'text-[#1c2c26]', 'border-[#dcd7c9]');
-    activeBtn.classList.add('bg-[#dfb15b]', 'text-[#0e2a22]', 'font-bold', 'border-[#dfb15b]');
+    activeBtn.classList.remove('bg-[#09221b]', 'text-[#e8d8b9]', 'border-[#dfb15b]/30');
+    activeBtn.classList.add('bg-[#ffdaa9]', 'text-[#0d2d24]', 'font-bold', 'border-[#dfb15b]', 'shadow-sm');
   }
 
   renderMenu();
@@ -322,9 +333,25 @@ function renderMenu() {
     }
 
     // Diet filter match
-    if (state.activeDietFilter === 'jain' && !item.isJain) return false;
-    if (state.activeDietFilter === 'bestseller' && !item.isBestseller && !item.isChefSpecial) return false;
-    if (state.activeDietFilter === 'spicy' && !item.isSpicy && item.spiceLevel < 2) return false;
+    if (state.activeDietFilter === 'veg') {
+      if (item.isVeg === false) return false;
+    } else if (state.activeDietFilter === 'jain') {
+      if (!item.isJain) return false;
+    } else if (state.activeDietFilter === 'special') {
+      if (!item.isChefSpecial) return false;
+    } else if (state.activeDietFilter === 'bestseller') {
+      if (!item.isBestseller && !item.isChefSpecial) return false;
+    } else if (state.activeDietFilter === 'beverages') {
+      const catObj = state.categories.find(c => c.id === item.categoryId);
+      const catName = (catObj ? catObj.name : (item.categoryName || '')).toLowerCase();
+      const isBev = catName.includes('beverage') || catName.includes('mocktail') || catName.includes('mojito') || catName.includes('shake') || catName.includes('drink') || catName.includes('coffee') || catName.includes('tea');
+      if (!isBev) return false;
+    } else if (state.activeDietFilter === 'desserts') {
+      const catObj = state.categories.find(c => c.id === item.categoryId);
+      const catName = (catObj ? catObj.name : (item.categoryName || '')).toLowerCase();
+      const isDessert = catName.includes('dessert') || catName.includes('sweet') || catName.includes('ice cream') || catName.includes('cake');
+      if (!isDessert) return false;
+    }
 
     return true;
   });
@@ -351,22 +378,22 @@ function renderMenu() {
     if (itemsInCat.length === 0) return;
 
     html += `
-      <section id="cat-section-${cat.id}" class="scroll-mt-32">
-        <!-- Category Section Header -->
-        <div class="flex items-center justify-between pb-3 mb-4 border-b border-[#e6e2d6]">
+      <section id="cat-section-${cat.id}" class="scroll-mt-36">
+        <!-- Category Section Header (Exact Match to Image 3) -->
+        <div class="flex items-center justify-between pb-3 mb-4 border-b border-[#dfb15b]/20">
           <div class="flex items-center gap-2.5">
-            <span class="text-2xl">${cat.icon || '🍽️'}</span>
+            <span class="text-xl sm:text-2xl">${cat.icon || '🍽️'}</span>
             <div>
-              <h3 class="text-xl sm:text-2xl font-serif font-bold text-[#0e2a22]">${cat.name}</h3>
+              <h3 class="text-xl sm:text-2xl font-serif font-bold text-[#0d2d24]">${cat.name}</h3>
               ${cat.subtitle || cat.description ? `<p class="text-xs text-[#5c6e67] mt-0.5">${cat.subtitle || cat.description}</p>` : ''}
             </div>
           </div>
-          <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-white text-[#5c6e67] border border-[#e6e2d6] shadow-sm">
+          <span class="text-xs font-semibold px-3 py-1 rounded-full bg-white text-[#5c6e67] border border-[#e6e2d6] shadow-xs">
             ${itemsInCat.length} ${itemsInCat.length === 1 ? 'Dish' : 'Dishes'}
           </span>
         </div>
 
-        <!-- Dishes Grid -->
+        <!-- 2-Column Dish Cards Grid (Exact Match to Image 2 & 3) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
           ${itemsInCat.map(item => renderDishCard(item, currency)).join('')}
         </div>
@@ -377,86 +404,68 @@ function renderMenu() {
   container.innerHTML = html;
 }
 
-// Single Dish Card Template (View-Only, Luxury Light Aesthetic)
+// Single Dish Card Template (Exact Match to Screenshots 2 and 3)
 function renderDishCard(item, currency) {
-  const isAvailable = item.isAvailable !== false;
-
   return `
-    <div onclick="openDishModal('${item.id}')" class="dish-card cursor-pointer rounded-2xl p-4 flex gap-4 relative overflow-hidden transition-all duration-300 ${!isAvailable ? 'opacity-65 grayscale-[30%]' : ''}">
+    <div onclick="openDishModal('${item.id}')" class="dish-card cursor-pointer rounded-2xl p-4 sm:p-5 flex flex-col justify-between transition-all duration-300 bg-white border border-[#e6e2d6] hover:border-[#dfb15b] hover:shadow-md group">
       
-      <!-- Left Content -->
-      <div class="flex-1 flex flex-col justify-between">
-        <div>
-          <!-- Badges Bar -->
-          <div class="flex items-center gap-1.5 flex-wrap mb-1.5">
-            <span class="veg-indicator" title="100% Pure Vegetarian"></span>
-            
-            ${item.isJain ? `
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-300" title="Jain Preparation Available">
-                🟡 Jain Option
-              </span>
-            ` : ''}
-
-            ${item.isChefSpecial ? `
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#ffdaa9] text-[#0e2a22] border border-[#dfb15b]">
-                ⭐ Chef's Special
-              </span>
-            ` : item.isBestseller ? `
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300">
-                Popular
-              </span>
-            ` : ''}
-
-            ${item.isSpicy || item.spiceLevel >= 2 ? `
-              <span class="text-[10px] font-bold text-rose-600" title="Spicy">🌶️ Spicy</span>
-            ` : ''}
+      <!-- Top Row: Veg Indicator + Title & Price -->
+      <div>
+        <div class="flex items-start justify-between gap-3 mb-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="veg-indicator shrink-0" title="100% Pure Vegetarian"></span>
+            <h4 class="font-bold text-base sm:text-[17px] text-[#0d2d24] group-hover:text-[#b8860b] transition leading-snug truncate">
+              ${item.name}
+            </h4>
           </div>
-
-          <!-- Dish Title -->
-          <h4 class="font-bold text-base text-[#0e2a22] group-hover:text-[#a17a2b] transition leading-snug line-clamp-1">
-            ${item.name}
-          </h4>
-          
-          <!-- Description -->
-          <p class="text-xs text-[#5c6e67] mt-1 line-clamp-2 leading-relaxed">
-            ${item.description || 'Prepared fresh with finest ingredients.'}
-          </p>
-        </div>
-
-        <!-- Price & Details Tag -->
-        <div class="mt-3.5 flex items-center justify-between">
-          <div class="flex items-baseline gap-1.5">
-            <span class="text-lg font-extrabold text-[#0e2a22]">
-              ${currency}${item.price}
-            </span>
-            ${item.originalPrice ? `
-              <span class="text-xs text-stone-400 line-through">
-                ${currency}${item.originalPrice}
+          <div class="text-right shrink-0">
+            <div class="flex items-baseline justify-end gap-1.5">
+              <span class="text-base sm:text-lg font-extrabold text-[#0d2d24]">
+                ${currency}${item.price}
               </span>
-            ` : ''}
-          </div>
-          
-          <div class="flex items-center gap-1 text-[11px] font-semibold text-[#8c9c94]">
-            <span>View info</span>
-            <i class="fa-solid fa-angle-right text-[10px]"></i>
+              ${item.originalPrice ? `
+                <span class="text-xs text-stone-400 line-through">
+                  ${currency}${item.originalPrice}
+                </span>
+              ` : ''}
+            </div>
           </div>
         </div>
+
+        <!-- Description -->
+        <p class="text-xs sm:text-[13px] text-[#5c6e67] leading-relaxed mb-4 line-clamp-2">
+          ${item.description || 'Prepared fresh with finest ingredients.'}
+        </p>
       </div>
 
-      <!-- Right Image -->
-      <div class="w-28 sm:w-32 h-28 sm:h-32 rounded-2xl overflow-hidden bg-[#f7f5ef] shrink-0 relative border border-[#e6e2d6] shadow-sm">
-        <img 
-          src="${item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80'}" 
-          alt="${item.name}" 
-          loading="lazy"
-          class="w-full h-full object-cover transition duration-300 hover:scale-105"
-          onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80'"
-        />
-        ${!isAvailable ? `
-          <div class="absolute inset-0 bg-[#0e2a22]/75 backdrop-blur-[2px] flex items-center justify-center p-1 text-center">
-            <span class="text-[11px] font-bold text-white bg-rose-600/90 px-2 py-0.5 rounded-full shadow">Sold Out</span>
-          </div>
-        ` : ''}
+      <!-- Bottom Row: Badges & View Details Link -->
+      <div class="flex items-center justify-between gap-2 pt-2 border-t border-[#f7f5ef]">
+        <div class="flex items-center gap-1.5 flex-wrap">
+          ${item.isJain ? `
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-300">
+              🟡 Jain Option
+            </span>
+          ` : ''}
+
+          ${item.isChefSpecial ? `
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#ffdaa9] text-[#0d2d24] border border-[#dfb15b]">
+              ⭐ Chef's Special
+            </span>
+          ` : item.isBestseller ? `
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300">
+              Popular
+            </span>
+          ` : ''}
+
+          ${item.isSpicy || item.spiceLevel >= 2 ? `
+            <span class="text-[10px] font-bold text-rose-600">🌶️ Spicy</span>
+          ` : ''}
+        </div>
+
+        <button onclick="openDishModal('${item.id}'); event.stopPropagation();" class="text-xs font-bold text-[#0d2d24] group-hover:text-[#b8860b] flex items-center gap-1 shrink-0 transition">
+          <span>View Details</span>
+          <i class="fa-solid fa-arrow-right text-[10px]"></i>
+        </button>
       </div>
 
     </div>

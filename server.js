@@ -299,11 +299,15 @@ app.delete('/api/orders/:id', (req, res) => {
 });
 
 // Serve frontend routes
+app.get('/menu', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'menu.html'));
+});
+
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// Fallback to index.html for customer menu
+// Fallback to index.html for customer hub
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
