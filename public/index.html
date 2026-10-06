@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+  <title>La Mensa | Multi Cuisine Restaurant - Digital Menu</title>
+  
+  <!-- Google Fonts: Playfair Display + Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Custom Light Theme CSS -->
+  <link rel="stylesheet" href="style.css">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            linen: '#f7f5ef',
+            forest: '#0e2a22',
+            gold: '#dfb15b',
+            goldlight: '#ffdaa9'
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            serif: ['"Playfair Display"', 'serif'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#f7f5ef] text-[#1c2c26] antialiased min-h-screen pb-16 selection:bg-[#dfb15b] selection:text-[#0e2a22]">
+
+  <!-- Top Announcement Bar -->
+  <div class="bg-[#0e2a22] text-[#ffdaa9] text-xs font-semibold py-2 px-4 shadow-sm border-b border-[#dfb15b]/20">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2 mx-auto sm:mx-0">
+        <span class="inline-block w-2 h-2 rounded-full bg-[#dfb15b] animate-ping"></span>
+        <span id="timingStatus">🔥 Welcome to La Mensa • Pure Taste & Greater Health • Open 11:00 AM - 11:30 PM</span>
+      </div>
+      <div class="hidden sm:flex items-center gap-4 text-xs">
+        <a href="tel:+919875281816" class="hover:text-white flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-phone text-[11px] text-[#dfb15b]"></i> +91 98752 81816
+        </a>
+        <span class="text-[#ffdaa9]/40">•</span>
+        <span class="text-[#ffdaa9]/80 font-medium">100% Pure Vegetarian</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Brand Navigation Header (Clean View-Only: NO Admin button) -->
+  <header class="sticky top-0 z-40 backdrop-blur-md bg-white/95 border-b border-[#e6e2d6] shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo & Name -->
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#0e2a22] to-[#1a4a3e] text-[#ffdaa9] flex items-center justify-center font-bold text-xl shadow-md border border-[#dfb15b]/30">
+          <i class="fa-solid fa-utensils"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 id="restaurantName" class="font-serif font-bold text-xl sm:text-2xl tracking-tight text-[#0e2a22] leading-none">
+              La Mensa
+            </h1>
+            <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
+              100% Pure Veg
+            </span>
+          </div>
+          <p id="restaurantTagline" class="text-xs text-[#5c6e67] font-medium hidden sm:block mt-0.5">
+            Multi Cuisine Restaurant • Greater Taste, Greater Health
+          </p>
+        </div>
+      </div>
+
+      <!-- Quick Info Buttons (WiFi & QR Modal) -->
+      <div class="flex items-center gap-2">
+        <!-- WiFi Info Modal Trigger -->
+        <button onclick="openWifiModal()" title="Guest WiFi Details" class="px-3 py-1.5 rounded-xl bg-[#f7f5ef] hover:bg-[#ffdaa9]/40 text-[#0e2a22] border border-[#e6e2d6] text-xs font-semibold flex items-center gap-1.5 transition shadow-sm">
+          <i class="fa-solid fa-wifi text-emerald-700"></i>
+          <span class="hidden sm:inline">Guest Wi-Fi</span>
+        </button>
+
+        <!-- View QR Modal Trigger -->
+        <button onclick="openQrModal()" title="View Table QR Code" class="px-3 py-1.5 rounded-xl bg-[#f7f5ef] hover:bg-[#ffdaa9]/40 text-[#0e2a22] border border-[#e6e2d6] text-xs font-semibold flex items-center gap-1.5 transition shadow-sm">
+          <i class="fa-solid fa-qrcode text-[#0e2a22]"></i>
+          <span class="hidden sm:inline">Menu QR</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Quick Social & Action Links Bar -->
+  <div class="bg-white border-b border-[#e6e2d6] py-2 px-4 shadow-sm overflow-x-auto no-scrollbar">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-3 text-xs min-w-max">
+      <div class="flex items-center gap-2">
+        <a href="tel:+919875281816" class="px-3 py-1.5 rounded-xl bg-[#f7f5ef] hover:bg-[#ffdaa9]/40 text-[#0e2a22] font-semibold flex items-center gap-1.5 transition border border-[#e6e2d6]">
+          <i class="fa-solid fa-phone text-emerald-600"></i> Call Us
+        </a>
+        <a href="https://goo.gl/maps/BPHVUQhLn2WfJgUg7" target="_blank" class="px-3 py-1.5 rounded-xl bg-[#f7f5ef] hover:bg-[#ffdaa9]/40 text-[#0e2a22] font-semibold flex items-center gap-1.5 transition border border-[#e6e2d6]">
+          <i class="fa-solid fa-location-dot text-rose-500"></i> Directions
+        </a>
+        <a href="https://www.instagram.com/lamensa_multicuisine" target="_blank" class="px-3 py-1.5 rounded-xl bg-[#f7f5ef] hover:bg-[#ffdaa9]/40 text-[#0e2a22] font-semibold flex items-center gap-1.5 transition border border-[#e6e2d6]">
+          <i class="fa-brands fa-instagram text-pink-600"></i> @lamensa_multicuisine
+        </a>
+        <a href="https://g.co/kgs/Q28SPB" target="_blank" class="px-3 py-1.5 rounded-xl bg-[#f7f5ef] hover:bg-[#ffdaa9]/40 text-[#0e2a22] font-semibold flex items-center gap-1.5 transition border border-[#e6e2d6]">
+          <i class="fa-solid fa-star text-amber-500"></i> Google Review
+        </a>
+      </div>
+      <div class="flex items-center gap-2 text-[#5c6e67] font-medium text-[11px]">
+        <i class="fa-solid fa-shield-halved text-emerald-600"></i>
+        <span>No MSG • No Food Colors</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hero & Live Search Area -->
+  <section class="relative bg-gradient-to-b from-[#ffdaa9]/20 via-[#f7f5ef] to-[#f7f5ef] pt-7 pb-4">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      
+      <div class="text-center max-w-2xl mx-auto mb-4">
+        <span class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold bg-[#ffdaa9] text-[#0e2a22] mb-2.5 shadow-sm border border-[#dfb15b]/40">
+          <i class="fa-solid fa-sparkles text-amber-700"></i> Handcrafted Global Flavors & Pure Jain Specialities
+        </span>
+        <h2 class="text-2xl sm:text-4xl font-serif font-bold text-[#0e2a22] mb-1.5 tracking-tight">
+          Explore Our Digital Menu
+        </h2>
+        <p class="text-xs sm:text-sm text-[#5c6e67] max-w-lg mx-auto">
+          Fresh artisanal preparations, authentic multi-cuisine soups, pizzas, sizzlers, mains & desserts.
+        </p>
+      </div>
+
+      <!-- Live Search Box -->
+      <div class="max-w-xl mx-auto relative mb-3">
+        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-[#8c9c94] text-base"></i>
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Search dishes (e.g. Manchow, Paneer Chermoula, Margherita, Khao Suey)..."
+          class="w-full pl-11 pr-10 py-3 rounded-2xl bg-white border border-[#dcd7c9] focus:border-[#dfb15b] focus:ring-4 focus:ring-[#dfb15b]/20 outline-none text-sm font-medium transition-all shadow-sm text-[#1c2c26] placeholder-[#8c9c94]"
+        />
+        <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600">
+          <i class="fa-solid fa-circle-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Dietary Filter Chips (Pure Veg, Jain Available, Chef's Special, Spicy) -->
+      <div class="flex items-center justify-center gap-2 flex-wrap text-xs font-semibold">
+        <button onclick="setDietFilter('all')" id="filter-all" class="diet-btn active px-3.5 py-1.5 rounded-full border border-[#dfb15b] bg-[#dfb15b] text-[#0e2a22] font-bold transition flex items-center gap-1.5 shadow-sm">
+          <span>All Dishes</span>
+        </button>
+        <button onclick="setDietFilter('jain')" id="filter-jain" class="diet-btn px-3.5 py-1.5 rounded-full border border-[#dcd7c9] bg-white text-[#1c2c26] hover:border-amber-500 hover:text-amber-700 transition flex items-center gap-1.5 shadow-sm">
+          <span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span>
+          <span>🟡 Jain Available</span>
+        </button>
+        <button onclick="setDietFilter('bestseller')" id="filter-bestseller" class="diet-btn px-3.5 py-1.5 rounded-full border border-[#dcd7c9] bg-white text-[#1c2c26] hover:border-[#dfb15b] hover:text-[#a17a2b] transition flex items-center gap-1.5 shadow-sm">
+          <i class="fa-solid fa-star text-amber-500"></i>
+          <span>Chef Specials</span>
+        </button>
+        <button onclick="setDietFilter('spicy')" id="filter-spicy" class="diet-btn px-3.5 py-1.5 rounded-full border border-[#dcd7c9] bg-white text-[#1c2c26] hover:border-rose-500 hover:text-rose-600 transition flex items-center gap-1.5 shadow-sm">
+          <span>🌶️ Spicy Delights</span>
+        </button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Sticky Category Navigation Bar -->
+  <div class="sticky top-[69px] z-30 bg-[#f7f5ef]/95 backdrop-blur border-y border-[#e6e2d6] py-2.5 px-4 shadow-sm overflow-x-auto no-scrollbar">
+    <div class="max-w-6xl mx-auto flex items-center gap-2 min-w-max" id="categoryNavContainer">
+      <!-- Category tabs rendered dynamically -->
+    </div>
+  </div>
+
+  <!-- Menu Content & Categorized Dishes -->
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6" id="menuMainContainer">
+    <!-- Loading State -->
+    <div id="loadingState" class="py-16 text-center">
+      <div class="w-12 h-12 rounded-full border-2 border-[#dfb15b] border-t-transparent animate-spin mx-auto mb-3"></div>
+      <p class="text-sm font-bold text-[#0e2a22]">Preparing fresh menu…</p>
+    </div>
+
+    <!-- Categorized Menu Items Container -->
+    <div id="menuContent" class="space-y-10 hidden">
+      <!-- Injected via JS -->
+    </div>
+
+    <!-- Empty Search State -->
+    <div id="emptySearchState" class="hidden py-16 text-center bg-white rounded-3xl border border-[#e6e2d6] p-8 max-w-md mx-auto shadow-sm">
+      <div class="w-16 h-16 bg-[#ffdaa9]/50 text-[#0e2a22] rounded-full flex items-center justify-center mx-auto text-2xl mb-3">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </div>
+      <h3 class="font-bold text-lg text-[#0e2a22]">No dishes found</h3>
+      <p class="text-xs text-[#5c6e67] mt-1 mb-4">Try searching with a different dish name or reset filters.</p>
+      <button onclick="clearSearch()" class="px-4 py-2 bg-[#dfb15b] hover:bg-[#c89b3c] text-[#0e2a22] font-bold text-xs rounded-xl transition shadow">
+        Show All Dishes
+      </button>
+    </div>
+  </main>
+
+  <!-- Dish Detail Modal (View Only) -->
+  <div id="dishModal" class="fixed inset-0 z-50 bg-[#0e2a22]/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-[#e6e2d6] transform transition-all scale-95 opacity-0 duration-200" id="dishModalCard">
+      <div class="relative h-64 w-full overflow-hidden bg-[#f7f5ef]">
+        <img id="modalDishImg" src="" alt="Dish Image" class="w-full h-full object-cover">
+        <button onclick="closeDishModal()" class="absolute top-3 right-3 w-9 h-9 rounded-full bg-[#0e2a22]/70 text-white hover:bg-[#0e2a22] flex items-center justify-center transition shadow-md">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div id="modalBadges" class="absolute top-3 left-3 flex flex-wrap gap-1.5">
+          <!-- Badges injected via JS -->
+        </div>
+      </div>
+      <div class="p-6">
+        <div class="flex items-start justify-between gap-4 mb-2">
+          <div>
+            <h3 id="modalDishName" class="text-xl font-bold font-serif text-[#0e2a22]">Dish Name</h3>
+            <div class="flex items-center gap-3 text-xs text-[#5c6e67] mt-1">
+              <span id="modalPortion"><i class="fa-solid fa-plate-wheat mr-1"></i> Serves 1-2</span>
+              <span id="modalPrepTime"><i class="fa-regular fa-clock mr-1"></i> 15 mins</span>
+              <span id="modalSpiceLevel">🌶️ Mild</span>
+            </div>
+          </div>
+          <div class="text-right">
+            <span id="modalPrice" class="text-2xl font-extrabold text-[#0e2a22]">₹299</span>
+            <span id="modalOriginalPrice" class="block text-xs text-stone-400 line-through">₹349</span>
+          </div>
+        </div>
+
+        <p id="modalDescription" class="text-xs sm:text-sm text-[#44524c] leading-relaxed my-4">
+          Dish detailed description...
+        </p>
+
+        <div id="modalTagsContainer" class="flex flex-wrap gap-1.5 mb-5">
+          <!-- Tags injected via JS -->
+        </div>
+
+        <div class="pt-4 border-t border-[#f0eee6] flex items-center justify-between">
+          <div class="flex items-center gap-2 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl">
+            <span class="w-2 h-2 rounded-full bg-emerald-600 inline-block"></span>
+            <span>Freshly Cooked To Order</span>
+          </div>
+          <button onclick="closeDishModal()" class="px-5 py-2.5 bg-[#dfb15b] hover:bg-[#c89b3c] text-[#0e2a22] font-bold text-xs rounded-xl transition shadow">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Guest WiFi Info Modal -->
+  <div id="wifiModal" class="fixed inset-0 z-50 bg-[#0e2a22]/75 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl border border-[#e6e2d6]">
+      <div class="w-14 h-14 rounded-2xl bg-[#ffdaa9]/50 text-[#0e2a22] flex items-center justify-center mx-auto text-2xl mb-3">
+        <i class="fa-solid fa-wifi"></i>
+      </div>
+      <h3 class="font-serif font-bold text-lg text-[#0e2a22]">Guest Wi-Fi Details</h3>
+      <p class="text-xs text-[#5c6e67] mt-1 mb-4">Enjoy high-speed complimentary Wi-Fi while dining with us.</p>
+
+      <div class="p-4 bg-[#f7f5ef] rounded-2xl border border-[#e6e2d6] text-left text-xs space-y-2 mb-4">
+        <div class="flex justify-between">
+          <span class="text-stone-500 font-medium">Network Name:</span>
+          <span class="font-bold text-[#0e2a22]" id="wifiNameDisplay">LaMensa_Guest</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-stone-500 font-medium">Password:</span>
+          <span class="font-bold text-[#0e2a22] font-mono bg-white px-2 py-0.5 rounded border border-[#dcd7c9]" id="wifiPassDisplay">goodfoodbettervibes</span>
+        </div>
+      </div>
+
+      <button onclick="closeWifiModal()" class="w-full py-2.5 bg-[#dfb15b] hover:bg-[#c89b3c] text-[#0e2a22] font-bold text-xs rounded-xl transition shadow">
+        Done
+      </button>
+    </div>
+  </div>
+
+  <!-- Table QR Modal -->
+  <div id="qrModal" class="fixed inset-0 z-50 bg-[#0e2a22]/75 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl border border-[#e6e2d6]">
+      <div class="w-12 h-12 rounded-2xl bg-[#ffdaa9] text-[#0e2a22] flex items-center justify-center mx-auto text-xl mb-3">
+        <i class="fa-solid fa-qrcode"></i>
+      </div>
+      <h3 class="font-serif font-bold text-lg text-[#0e2a22]">Scan Table QR Menu</h3>
+      <p class="text-xs text-[#5c6e67] mt-1 mb-4">Scan with your smartphone camera to access the live menu.</p>
+      
+      <div class="bg-white p-4 rounded-2xl border-2 border-dashed border-[#dfb15b] inline-block shadow-inner mb-4">
+        <img id="menuQrImage" src="" alt="Menu QR Code" class="w-48 h-48 mx-auto object-contain">
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a id="downloadQrLink" href="" download="la-mensa-table-qr.png" target="_blank" class="flex-1 py-2.5 bg-[#dfb15b] hover:bg-[#c89b3c] text-[#0e2a22] font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition shadow">
+          <i class="fa-solid fa-download"></i> Download QR
+        </a>
+        <button onclick="closeQrModal()" class="px-4 py-2.5 bg-[#f7f5ef] hover:bg-stone-200 text-stone-700 font-semibold text-xs rounded-xl transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- App Script -->
+  <script src="app.js"></script>
+</body>
+</html>

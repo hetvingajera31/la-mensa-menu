@@ -1,0 +1,89 @@
+/* Custom Light Luxury Theme Styling - La Mensa */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap');
+
+body {
+  background-color: #f7f5ef !important;
+  color: #1c2c26 !important;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Smooth Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f7f5ef;
+}
+::-webkit-scrollbar-thumb {
+  background: #dcd7c9;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #c89b3c;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Veg Indicator */
+.veg-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid #16a34a;
+  border-radius: 4px;
+  background-color: #f0fdf4;
+  padding: 1px;
+}
+.veg-indicator::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #16a34a;
+}
+
+/* Dish Card Hover Effects */
+.dish-card {
+  background-color: #ffffff;
+  border: 1px solid #e6e2d6;
+  box-shadow: 0 1px 3px 0 rgba(14, 42, 34, 0.04), 0 1px 2px -1px rgba(14, 42, 34, 0.04);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.dish-card:hover {
+  transform: translateY(-2px);
+  border-color: #dfb15b;
+  box-shadow: 0 12px 24px -6px rgba(14, 42, 34, 0.08), 0 6px 12px -4px rgba(223, 177, 91, 0.15);
+}
+
+/* Category Pill Active State */
+.cat-pill.active {
+  background: #0e2a22;
+  color: #ffdaa9;
+  box-shadow: 0 4px 14px rgba(14, 42, 34, 0.25);
+  font-weight: 700;
+  border-color: #0e2a22 !important;
+}
+
+/* Toast animation */
+@keyframes slideDownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-toast {
+  animation: slideDownFade 0.25s ease-out forwards;
+}
