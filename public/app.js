@@ -10,14 +10,60 @@ const state = {
 
 // Initialize app on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
-  fetchMenuData();
+  initMenuSource();
   setupEventListeners();
+});
 
-  // Auto refresh menu every 30 seconds so admin changes reflect live
+let firebaseInitialized = false;
+
+function initMenuSource() {
+  const cfg = window.FIREBASE_CONFIG;
+  if (window.firebase && cfg && cfg.apiKey && cfg.apiKey.trim() !== '') {
+    try {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(cfg);
+      }
+      const firestore = firebase.firestore();
+      firebaseInitialized = true;
+      console.log('⚡ Connected to Firebase Realtime Firestore');
+
+      // Realtime listener for instant live customer menu updates
+      firestore.collection("restaurant").doc("menu").onSnapshot((doc) => {
+        const loadingEl = document.getElementById('loadingState');
+        const contentEl = document.getElementById('menuContent');
+
+        if (doc.exists) {
+          const data = doc.data();
+          state.settings = data.settings || {};
+          state.categories = data.categories || [];
+          state.items = data.items || [];
+
+          applySettingsToUI();
+          renderCategoryNav();
+          renderMenu();
+
+          if (loadingEl) loadingEl.classList.add('hidden');
+          if (contentEl) contentEl.classList.remove('hidden');
+        } else {
+          // If Firestore document does not exist yet, fallback to local API
+          fetchMenuData();
+        }
+      }, (err) => {
+        console.warn('Firebase listener error, falling back to local API:', err);
+        fetchMenuData();
+      });
+      return;
+    } catch (e) {
+      console.warn('Firebase init failed, using local API:', e);
+    }
+  }
+
+  // Fallback to Express API
+  fetchMenuData();
   setInterval(() => {
     fetchMenuData(true);
   }, 30000);
-});
+}
 
 // Fetch Menu & Settings from Express API
 async function fetchMenuData(isBackgroundSync = false) {

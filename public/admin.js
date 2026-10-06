@@ -18,6 +18,7 @@ let ordersPollingInterval = null;
 document.addEventListener('DOMContentLoaded', () => {
   fetchAdminData();
   setupAdminListeners();
+  initCloudSettings();
   
   // Auto-refresh orders every 8 seconds for real-time kitchen display
   ordersPollingInterval = setInterval(() => {
@@ -56,6 +57,7 @@ async function fetchAdminData() {
     populateTableSelectors();
     populateSettingsForm();
     generateQrCodePreview();
+    pushStateToFirebaseIfAvailable();
 
   } catch (err) {
     console.error('Error fetching admin data:', err);
@@ -350,6 +352,8 @@ function openAddItemModal() {
   document.getElementById('formItemIsAvailable').checked = true;
   document.getElementById('formItemIsJain').checked = false;
   document.getElementById('formItemIsChefSpecial').checked = false;
+  document.getElementById('imagePreviewContainer').classList.add('hidden');
+  document.getElementById('imgUploadStatus').textContent = '';
   document.getElementById('itemModal').classList.remove('hidden');
 }
 
@@ -372,6 +376,16 @@ function openEditItemModal(itemId) {
   document.getElementById('formItemIsChefSpecial').checked = Boolean(item.isChefSpecial);
   document.getElementById('formItemIsBestseller').checked = Boolean(item.isBestseller);
   document.getElementById('formItemIsAvailable').checked = item.isAvailable !== false;
+
+  const previewContainer = document.getElementById('imagePreviewContainer');
+  const previewThumb = document.getElementById('imagePreviewThumb');
+  if (item.image) {
+    previewThumb.src = item.image;
+    previewContainer.classList.remove('hidden');
+  } else {
+    previewContainer.classList.add('hidden');
+  }
+  document.getElementById('imgUploadStatus').textContent = '';
 
   document.getElementById('itemModal').classList.remove('hidden');
 }
@@ -836,4 +850,225 @@ function showAdminToast(message, type = 'info') {
     toast.style.transition = 'all 0.3s ease';
     setTimeout(() => toast.remove(), 300);
   }, 2500);
+}
+
+// ================= CLOUD SYNC & IMGBB IMAGE UPLOADER =================
+
+let firebaseAdminDb = null;
+
+function initCloudSettings() {
+  const savedImgbb = localStorage.getItem('lamensa_imgbb_key') || window.IMGBB_API_KEY || '';
+  const savedFb = localStorage.getItem('lamensa_firebase_config') || (window.FIREBASE_CONFIG ? JSON.stringify(window.FIREBASE_CONFIG, null, 2) : '');
+
+  const imgbbInput = document.getElementById('settingImgbbKey');
+  if (imgbbInput) imgbbInput.value = savedImgbb;
+
+  const fbInput = document.getElementById('settingFirebaseConfig');
+  if (fbInput) fbInput.value = savedFb;
+
+  setupFirebaseAdmin();
+}
+
+function setupFirebaseAdmin() {
+  try {
+    const rawFb = localStorage.getItem('lamensa_firebase_config');
+    let cfg = null;
+    if (rawFb) {
+      cfg = JSON.parse(rawFb);
+    } else if (window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.apiKey) {
+      cfg = window.FIREBASE_CONFIG;
+    }
+
+    if (window.firebase && cfg && cfg.apiKey && cfg.apiKey.trim() !== '') {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(cfg);
+      }
+      firebaseAdminDb = firebase.firestore();
+      updateCloudStatusBadge(true);
+      console.log('🟢 Firebase Admin connected');
+    } else {
+      updateCloudStatusBadge(false);
+    }
+  } catch (err) {
+    console.warn('Firebase Admin setup failed:', err);
+    updateCloudStatusBadge(false);
+  }
+}
+
+function updateCloudStatusBadge(isConnected = false) {
+  const badge = document.getElementById('cloudStatusBadge');
+  if (!badge) return;
+  if (isConnected) {
+    badge.className = 'text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+    badge.textContent = '🟢 Firebase Connected';
+  } else {
+    badge.className = 'text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700';
+    badge.textContent = '⚪ Local Express Mode';
+  }
+}
+
+function saveCloudSettings() {
+  const imgbbKey = document.getElementById('settingImgbbKey').value.trim();
+  const fbConfigRaw = document.getElementById('settingFirebaseConfig').value.trim();
+
+  localStorage.setItem('lamensa_imgbb_key', imgbbKey);
+  window.IMGBB_API_KEY = imgbbKey;
+
+  if (fbConfigRaw) {
+    try {
+      const parsed = JSON.parse(fbConfigRaw);
+      localStorage.setItem('lamensa_firebase_config', JSON.stringify(parsed));
+      window.FIREBASE_CONFIG = parsed;
+      setupFirebaseAdmin();
+      showAdminToast('Cloud settings saved successfully!', 'success');
+    } catch (e) {
+      showAdminToast('Invalid JSON in Firebase configuration. Please check format.', 'error');
+      return;
+    }
+  } else {
+    localStorage.removeItem('lamensa_firebase_config');
+    updateCloudStatusBadge(false);
+    showAdminToast('Cloud settings updated', 'info');
+  }
+}
+
+// 1-Click Sync Current Menu to Firebase
+async function syncLocalToFirebase() {
+  if (!firebaseAdminDb) {
+    showAdminToast('Please configure Firebase in Settings first!', 'warning');
+    return;
+  }
+
+  const btn = document.getElementById('btnSyncFirebase');
+  if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Syncing...';
+
+  try {
+    const payload = {
+      settings: adminState.settings,
+      categories: adminState.categories,
+      items: adminState.items,
+      updatedAt: new Date().toISOString()
+    };
+
+    await firebaseAdminDb.collection("restaurant").doc("menu").set(payload);
+    showAdminToast(`Synced all ${adminState.items.length} items & ${adminState.categories.length} categories to Firebase!`, 'success');
+  } catch (err) {
+    console.error('Sync failed:', err);
+    showAdminToast('Error syncing to Firebase: ' + err.message, 'error');
+  } finally {
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> 1-Click Sync to Firebase';
+  }
+}
+
+// Background push to Firebase whenever dishes or categories are modified
+async function pushStateToFirebaseIfAvailable() {
+  if (!firebaseAdminDb) return;
+  try {
+    const payload = {
+      settings: adminState.settings,
+      categories: adminState.categories,
+      items: adminState.items,
+      updatedAt: new Date().toISOString()
+    };
+    await firebaseAdminDb.collection("restaurant").doc("menu").set(payload);
+    console.log('⚡ Firebase synced with latest changes');
+  } catch (err) {
+    console.warn('Firebase background push warning:', err);
+  }
+}
+
+// Handle Image File Upload (Auto Canvas Compression + ImgBB API)
+async function handleImageFileUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const statusEl = document.getElementById('imgUploadStatus');
+  const previewContainer = document.getElementById('imagePreviewContainer');
+  const previewThumb = document.getElementById('imagePreviewThumb');
+  const imgInput = document.getElementById('formItemImage');
+
+  const imgbbKey = localStorage.getItem('lamensa_imgbb_key') || window.IMGBB_API_KEY;
+
+  if (!imgbbKey) {
+    showAdminToast('Please enter ImgBB API Key in Restaurant Settings first!', 'warning');
+    if (statusEl) statusEl.textContent = 'ImgBB Key missing';
+    return;
+  }
+
+  if (statusEl) statusEl.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Compressing...';
+
+  try {
+    // 1. Client-Side Canvas Compression (Converts 6MB to ~150KB)
+    const compressedBlob = await compressImageFile(file, 1000, 0.82);
+
+    if (statusEl) statusEl.innerHTML = '<i class="fa-solid fa-cloud-arrow-up animate-pulse"></i> Uploading...';
+
+    // 2. Upload to ImgBB
+    const formData = new FormData();
+    formData.append('image', compressedBlob, (file.name || 'dish').replace(/\.[^/.]+$/, "") + '.jpg');
+
+    const res = await fetch(`https://api.imgbb.com/1/upload?key=${encodeURIComponent(imgbbKey)}`, {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      const cdnUrl = data.data.display_url || data.data.url;
+      imgInput.value = cdnUrl;
+
+      if (previewThumb) previewThumb.src = cdnUrl;
+      if (previewContainer) previewContainer.classList.remove('hidden');
+      if (statusEl) statusEl.innerHTML = '<span class="text-emerald-400">✓ Uploaded</span>';
+      showAdminToast('Photo compressed & uploaded to ImgBB!', 'success');
+    } else {
+      throw new Error(data.error ? data.error.message : 'Upload failed');
+    }
+  } catch (err) {
+    console.error('Image upload error:', err);
+    if (statusEl) statusEl.innerHTML = '<span class="text-rose-400">Failed</span>';
+    showAdminToast('Image upload failed: ' + err.message, 'error');
+  }
+}
+
+// Client-Side Canvas Image Compression Helper
+function compressImageFile(file, maxDimension = 1000, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (e) => {
+      const img = new Image();
+      img.src = e.target.result;
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxDimension) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          }
+        } else {
+          if (height > maxDimension) {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob((blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error('Canvas compression failed'));
+        }, 'image/jpeg', quality);
+      };
+      img.onerror = reject;
+    };
+    reader.onerror = reject;
+  });
 }
