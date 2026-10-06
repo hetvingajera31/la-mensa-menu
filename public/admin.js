@@ -26,43 +26,66 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 8000);
 });
 
-// Fetch Full Dataset & Stats from Server
+// Fetch Full Dataset & Stats from Cloud / Server
 async function fetchAdminData() {
-  try {
-    const [dataRes, statsRes] = await Promise.all([
-      fetch('/api/data'),
-      fetch('/api/stats')
-    ]);
+  const cfg = window.FIREBASE_CONFIG;
+  let loadedFromFirebase = false;
 
-    const dbData = await dataRes.json();
-    const statsData = await statsRes.json();
-
-    if (dbData.success) {
-      adminState.settings = dbData.data.settings || {};
-      adminState.categories = dbData.data.categories || [];
-      adminState.items = dbData.data.items || [];
-      adminState.orders = dbData.data.orders || [];
+  // 1. Priority 1: Fetch directly from Firebase Cloud (Single Source of Truth)
+  if (cfg && cfg.databaseURL) {
+    try {
+      const fbRes = await fetch(`${cfg.databaseURL}/menu.json?t=${Date.now()}`);
+      const cloudData = await fbRes.json();
+      if (cloudData && cloudData.items && cloudData.items.length) {
+        adminState.settings = cloudData.settings || {};
+        adminState.categories = cloudData.categories || [];
+        adminState.items = cloudData.items || [];
+        loadedFromFirebase = true;
+        console.log('⚡ Admin loaded directly from Firebase Cloud (items:', adminState.items.length, ')');
+      }
+    } catch (fbErr) {
+      console.warn('Firebase direct load warning:', fbErr);
     }
-
-    if (statsData.success) {
-      adminState.stats = statsData.stats || {};
-    }
-
-    updateHeaderAndSidebar();
-    renderDashboard();
-    renderMenuItems();
-    renderCategories();
-    renderOrders();
-    populateCategoryDropdowns();
-    populateTableSelectors();
-    populateSettingsForm();
-    generateQrCodePreview();
-    pushStateToFirebaseIfAvailable();
-
-  } catch (err) {
-    console.error('Error fetching admin data:', err);
-    showAdminToast('Failed to connect to backend server', 'error');
   }
+
+  // 2. Priority 2: Fallback to local /api/data ONLY if Firebase didn't load
+  if (!loadedFromFirebase) {
+    try {
+      const dataRes = await fetch('/api/data');
+      const dbData = await dataRes.json();
+      if (dbData.success) {
+        adminState.settings = dbData.data.settings || {};
+        adminState.categories = dbData.data.categories || [];
+        adminState.items = dbData.data.items || [];
+        adminState.orders = dbData.data.orders || [];
+      }
+    } catch (apiErr) {
+      console.warn('API fallback error:', apiErr);
+    }
+  }
+
+  // Calculate stats dynamically
+  const totalItems = adminState.items.length;
+  const inStockCount = adminState.items.filter(i => i.isAvailable !== false).length;
+  adminState.stats = {
+    totalItems,
+    inStockCount,
+    outOfStockCount: totalItems - inStockCount,
+    vegCount: adminState.items.filter(i => i.isVeg).length,
+    totalCategories: adminState.categories.length,
+    activeOrders: 0,
+    totalRevenue: 0
+  };
+
+  updateHeaderAndSidebar();
+  renderDashboard();
+  renderMenuItems();
+  renderCategories();
+  renderOrders();
+  populateCategoryDropdowns();
+  populateTableSelectors();
+  populateSettingsForm();
+  generateQrCodePreview();
 }
 
 // Silent fetch for live kitchen updates

@@ -96,16 +96,40 @@ function initMenuSource() {
   }, 30000);
 }
 
-// Fetch Menu & Settings from Express API
+// Fetch Menu & Settings from Cloud / Server
 async function fetchMenuData(isBackgroundSync = false) {
   const loadingEl = document.getElementById('loadingState');
   const contentEl = document.getElementById('menuContent');
+  const cfg = window.FIREBASE_CONFIG;
 
   try {
-    const res = await fetch('/api/menu?t=' + Date.now());
-    const data = await res.json();
+    let data = null;
 
-    if (data.success) {
+    // 1. Fetch directly from Firebase Cloud
+    if (cfg && cfg.databaseURL) {
+      try {
+        const fbRes = await fetch(`${cfg.databaseURL}/menu.json?t=${Date.now()}`);
+        const cloudData = await fbRes.json();
+        if (cloudData && cloudData.items && cloudData.items.length) {
+          data = {
+            success: true,
+            settings: cloudData.settings || {},
+            categories: cloudData.categories || [],
+            items: cloudData.items || []
+          };
+        }
+      } catch (fbErr) {
+        console.warn('Firebase direct load error:', fbErr);
+      }
+    }
+
+    // 2. Fallback to Express API
+    if (!data) {
+      const res = await fetch('/api/menu?t=' + Date.now());
+      data = await res.json();
+    }
+
+    if (data && data.success) {
       state.settings = data.settings || {};
       state.categories = data.categories || [];
       state.items = data.items || [];
@@ -117,7 +141,7 @@ async function fetchMenuData(isBackgroundSync = false) {
       if (loadingEl) loadingEl.classList.add('hidden');
       if (contentEl) contentEl.classList.remove('hidden');
     } else {
-      throw new Error(data.message || 'Failed to load menu');
+      throw new Error(data ? data.message : 'Failed to load menu');
     }
   } catch (err) {
     console.error('Error fetching menu:', err);
