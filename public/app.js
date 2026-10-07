@@ -158,21 +158,14 @@ async function fetchMenuData(isBackgroundSync = false) {
 }
 
 // Manual Full Menu Refresh Trigger (Invoked by header refresh button)
-async function refreshMenu(e) {
+function refreshMenu(e) {
   if (e && e.preventDefault) e.preventDefault();
   const icon = document.getElementById('headerRefreshIcon');
   if (icon) icon.classList.add('animate-spin');
 
-  try {
-    await fetchMenuData(false);
-    showMenuToast('Menu refreshed with latest items & pricing!', 'success');
-  } catch (err) {
-    showMenuToast('Could not refresh menu: ' + err.message, 'warning');
-  } finally {
-    setTimeout(() => {
-      if (icon) icon.classList.remove('animate-spin');
-    }, 700);
-  }
+  setTimeout(() => {
+    window.location.reload();
+  }, 200);
 }
 
 // Menu Toast Notification

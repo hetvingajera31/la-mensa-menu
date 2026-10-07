@@ -142,16 +142,25 @@ window.addEventListener('beforeunload', (e) => {
   }
 });
 
-// Check Admin Authentication on Load
+let isAdminAuthed = false;
+
+// Clear any stored admin session so refresh/reload always requires the password screen
+try {
+  sessionStorage.removeItem('lamensa_admin_auth');
+} catch (e) {}
+
+// Check Admin Authentication on Load (Always requires password on page reload / refresh)
 function checkAdminAuth() {
-  const isAuthed = sessionStorage.getItem('lamensa_admin_auth') === 'true';
   const lockScreen = document.getElementById('adminLockScreen');
   if (!lockScreen) return;
-  if (isAuthed) {
+  
+  if (isAdminAuthed) {
     lockScreen.classList.add('hidden');
   } else {
     lockScreen.classList.remove('hidden');
     const passInput = document.getElementById('adminPasswordInput');
+    const errEl = document.getElementById('adminLoginError');
+    if (errEl) errEl.classList.add('hidden');
     if (passInput) {
       passInput.value = '';
       setTimeout(() => passInput.focus(), 150);
@@ -168,7 +177,7 @@ function handleAdminLogin(e) {
 
   const customPass = adminState.settings && adminState.settings.adminPassword;
   if (entered === DEFAULT_ADMIN_PASS || (customPass && entered === customPass)) {
-    sessionStorage.setItem('lamensa_admin_auth', 'true');
+    isAdminAuthed = true;
     if (errEl) errEl.classList.add('hidden');
     const lockScreen = document.getElementById('adminLockScreen');
     if (lockScreen) lockScreen.classList.add('hidden');
@@ -1473,7 +1482,10 @@ async function handleImageUpload(e) {
 
 // Lock Admin Session (Brings back the lock screen on this page)
 function lockAdminSession() {
-  sessionStorage.removeItem('lamensa_admin_auth');
+  isAdminAuthed = false;
+  try {
+    sessionStorage.removeItem('lamensa_admin_auth');
+  } catch (e) {}
   const lockScreen = document.getElementById('adminLockScreen');
   if (lockScreen) {
     lockScreen.classList.remove('hidden');
@@ -1487,6 +1499,14 @@ function lockAdminSession() {
   }
   showAdminToast('Admin screen locked.', 'info');
 }
+
+// Ensure reload or closing tab always locks admin session
+window.addEventListener('beforeunload', () => {
+  isAdminAuthed = false;
+  try {
+    sessionStorage.removeItem('lamensa_admin_auth');
+  } catch (e) {}
+});
 
 // Logo Management UI Handlers
 function updateAdminLogoUI(url) {
