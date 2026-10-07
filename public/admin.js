@@ -1513,8 +1513,8 @@ function updateAdminLogoUI(url) {
   const adminLogoEl = document.getElementById('adminHeaderLogoContainer');
   const previewEl = document.getElementById('profLogoPreview');
   if (url) {
-    if (adminLogoEl) adminLogoEl.innerHTML = `<img src="${url}" alt="Logo" class="w-full h-full object-contain p-0.5" />`;
-    if (previewEl) previewEl.innerHTML = `<img src="${url}" alt="Logo" class="w-full h-full object-contain p-1" />`;
+    if (adminLogoEl) adminLogoEl.innerHTML = `<img src="${url}" alt="Logo" class="w-full h-full object-cover" />`;
+    if (previewEl) previewEl.innerHTML = `<img src="${url}" alt="Logo" class="w-full h-full object-cover" />`;
   } else {
     if (adminLogoEl) adminLogoEl.innerHTML = `
       <div class="w-full h-full rounded-t-[13px] rounded-b-sm border border-[#dfb15b]/30 flex flex-col items-center justify-center bg-gradient-to-b from-[#10352a] to-[#09221b] overflow-hidden">

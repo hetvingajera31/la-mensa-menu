@@ -229,7 +229,7 @@ function applySettingsToUI() {
   const headerLogoEl = document.getElementById('headerLogoContainer');
   if (headerLogoEl) {
     if (logoUrl) {
-      headerLogoEl.innerHTML = `<img src="${logoUrl}" alt="${s.restaurantName || 'Logo'}" class="w-full h-full object-contain p-0.5" />`;
+      headerLogoEl.innerHTML = `<img src="${logoUrl}" alt="${s.restaurantName || 'Logo'}" class="w-full h-full object-cover" />`;
     } else {
       headerLogoEl.innerHTML = `
         <div class="w-full h-full rounded-t-[13px] rounded-b-sm border border-[#dfb15b]/30 flex flex-col items-center justify-center bg-gradient-to-b from-[#10352a] to-[#09221b] overflow-hidden">
@@ -243,7 +243,7 @@ function applySettingsToUI() {
   const heroLogoEl = document.getElementById('heroLogoContainer');
   if (heroLogoEl) {
     if (logoUrl) {
-      heroLogoEl.innerHTML = `<img src="${logoUrl}" alt="${s.restaurantName || 'Logo'}" class="w-full h-full object-contain p-1" />`;
+      heroLogoEl.innerHTML = `<img src="${logoUrl}" alt="${s.restaurantName || 'Logo'}" class="w-full h-full object-cover" />`;
     } else {
       heroLogoEl.innerHTML = `
         <div class="w-full h-full rounded-t-[23px] rounded-b-xl border border-[#dfb15b]/35 flex flex-col items-center justify-center bg-gradient-to-b from-[#10352a] to-[#09221b] overflow-hidden p-1 text-center">
@@ -257,7 +257,7 @@ function applySettingsToUI() {
   const footerLogoEl = document.getElementById('footerLogoContainer');
   if (footerLogoEl) {
     if (logoUrl) {
-      footerLogoEl.innerHTML = `<img src="${logoUrl}" alt="${s.restaurantName || 'Logo'}" class="w-full h-full object-contain p-1" />`;
+      footerLogoEl.innerHTML = `<img src="${logoUrl}" alt="${s.restaurantName || 'Logo'}" class="w-full h-full object-cover" />`;
     } else {
       footerLogoEl.innerHTML = `
         <div class="w-full h-full rounded-t-[18px] rounded-b-lg border border-[#dfb15b]/35 flex flex-col items-center justify-center bg-gradient-to-b from-[#10352a] to-[#09221b] overflow-hidden p-0.5 text-center">
