@@ -157,6 +157,45 @@ async function fetchMenuData(isBackgroundSync = false) {
   }
 }
 
+// Manual Full Menu Refresh Trigger (Invoked by header refresh button)
+async function refreshMenu(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const icon = document.getElementById('headerRefreshIcon');
+  if (icon) icon.classList.add('animate-spin');
+
+  try {
+    await fetchMenuData(false);
+    showMenuToast('Menu refreshed with latest items & pricing!', 'success');
+  } catch (err) {
+    showMenuToast('Could not refresh menu: ' + err.message, 'warning');
+  } finally {
+    setTimeout(() => {
+      if (icon) icon.classList.remove('animate-spin');
+    }, 700);
+  }
+}
+
+// Menu Toast Notification
+function showMenuToast(msg, type = 'info') {
+  let toast = document.getElementById('menuToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'menuToast';
+    document.body.appendChild(toast);
+  }
+
+  toast.textContent = msg;
+  if (type === 'success') {
+    toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-full text-xs font-bold shadow-xl transition-all duration-300 pointer-events-none bg-[#09221b] text-[#ffdaa9] border border-[#dfb15b]/40 opacity-100 translate-y-0';
+  } else {
+    toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-full text-xs font-bold shadow-xl transition-all duration-300 pointer-events-none bg-stone-900 text-white border border-stone-700 opacity-100 translate-y-0';
+  }
+
+  setTimeout(() => {
+    toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-full text-xs font-bold shadow-xl transition-all duration-300 pointer-events-none opacity-0 translate-y-3';
+  }, 2500);
+}
+
 // Apply Restaurant Info to UI
 function applySettingsToUI() {
   const s = state.settings;
@@ -544,25 +583,6 @@ function openDishModal(itemId) {
     }
   }
 
-  const portionEl = document.getElementById('modalPortion');
-  if (portionEl) {
-    if (item.portion && item.portion.trim()) {
-      portionEl.innerHTML = `<i class="fa-solid fa-plate-wheat mr-1 text-[#dfb15b]"></i> ${item.portion}`;
-      portionEl.classList.remove('hidden');
-    } else {
-      portionEl.classList.add('hidden');
-    }
-  }
-
-  const prepTimeEl = document.getElementById('modalPrepTime');
-  if (prepTimeEl) {
-    if (item.prepTime && item.prepTime.trim()) {
-      prepTimeEl.innerHTML = `<i class="fa-regular fa-clock mr-1 text-[#dfb15b]"></i> ${item.prepTime}`;
-      prepTimeEl.classList.remove('hidden');
-    } else {
-      prepTimeEl.classList.add('hidden');
-    }
-  }
   
   const spiceLevels = ['Zero Spice', '🌶️ Mild Spice', '🌶️🌶️ Medium Spice', '🌶️🌶️🌶️ Extra Spicy'];
   document.getElementById('modalSpiceLevel').textContent = spiceLevels[item.spiceLevel || 0] || 'Mild';

@@ -143,8 +143,6 @@
       "isAvailable": false,
       "description": "Classic rich and fragrant slow-cooked ripe tomato soup finished with fresh aromatic basil leaves, served with herb croutons.",
       "image": "https://images.unsplash.com/photo-1541832676-9b763b0239ab?auto=format&fit=crop&w=600&q=80",
-      "portion": "1 Serving",
-      "prepTime": "15-20 mins",
       "tags": [
         "Classic",
         "Gluten-Free Option"
@@ -166,8 +164,6 @@
       "isAvailable": true,
       "description": "Light and refreshing clear vegetable broth flavored with zesty fresh lemon juice and fragrant garden coriander.",
       "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80",
-      "portion": "1 Serving",
-      "prepTime": "15-20 mins",
       "tags": [
         "Healthy",
         "Detox"
@@ -189,8 +185,6 @@
       "isAvailable": true,
       "description": "Spicy Indo-Chinese clear soup infused with bold roasted garlic flavors, shredded seasonal vegetables, and chili oil.",
       "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80",
-      "portion": "1 Serving",
-      "prepTime": "15-20 mins",
       "tags": [
         "Spicy",
         "Chinese"
@@ -212,8 +206,6 @@
       "isAvailable": true,
       "description": "All-time favorite dark Indo-Chinese vegetable soup with soy, garlic, green chilies, topped with crispy fried noodles.",
       "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80",
-      "portion": "1 Serving",
-      "prepTime": "15-20 mins",
       "tags": [
         "Crispy Noodles",
         "Popular"
@@ -235,8 +227,6 @@
       "isAvailable": true,
       "description": "Protein-rich creamy broccoli soup roasted with toasted Californian almond flakes and a delicate hint of nutmeg.",
       "image": "https://images.unsplash.com/photo-1607528971899-2e7a3be368b6?auto=format&fit=crop&w=600&q=80",
-      "portion": "1 Serving",
-      "prepTime": "15-20 mins",
       "tags": [
         "Chef Special",
         "Gourmet"
@@ -258,8 +248,6 @@
       "isAvailable": true,
       "description": "Rich and creamy yet tangy coconut milk broth infused with lemongrass, kaffir lime, and served with custom condiments.",
       "image": "https://images.unsplash.com/photo-1617093727343-374698b1b08d?auto=format&fit=crop&w=600&q=80",
-      "portion": "1 Serving",
-      "prepTime": "15-20 mins",
       "tags": [
         "Thai",
         "Signature"
@@ -281,8 +269,6 @@
       "isAvailable": true,
       "description": "Fresh juicy chilled watermelon cubes paired with Greek feta cheese, mint leaves, roasted pine nuts, and aged balsamic glaze.",
       "image": "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Refreshing",
         "Gourmet"
@@ -304,8 +290,6 @@
       "isAvailable": true,
       "description": "Crisp romaine iceberg lettuce, spiced chickpeas, herb croutons, and Hass avocado tossed in creamy Caesar dressing and Parmesan.",
       "image": "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Avocado",
         "Superfood"
@@ -327,8 +311,6 @@
       "isAvailable": true,
       "description": "Crunchy bell peppers, English cucumbers, cherry tomatoes, and crispy sumac pita chips in a zesty pomegranate lemon vinaigrette.",
       "image": "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Mediterranean",
         "Crispy"
@@ -350,8 +332,6 @@
       "isAvailable": true,
       "description": "Golden panko-crusted cheese croquettes stuffed with melted mozzarella, sweet corn, and jalapenos, served with smoked paprika dip.",
       "image": "https://images.unsplash.com/photo-1548340748-6d2b7d7da280?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Cheesy",
         "Must Try"
@@ -373,8 +353,6 @@
       "isAvailable": true,
       "description": "Melt-in-mouth pan-seared patties crafted from spinach, green peas, paneer, and aromatic spices, crowned with cashew nuts.",
       "image": "https://images.unsplash.com/photo-1548340748-6d2b7d7da280?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Traditional",
         "Healthy"
@@ -396,8 +374,6 @@
       "isAvailable": true,
       "description": "Tender paneer cubes wok-tossed in house-crafted smoky tomato barbecue glaze with bell peppers and roasted sesame.",
       "image": "https://images.unsplash.com/photo-1548340748-6d2b7d7da280?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Smoky",
         "Barbecue"
@@ -419,8 +395,6 @@
       "isAvailable": true,
       "description": "Crispy golden potato fries dusted with authentic African bird's eye chili seasoning and served with garlic aioli.",
       "image": "https://images.unsplash.com/photo-1548340748-6d2b7d7da280?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Snack",
         "Spicy"
@@ -442,8 +416,6 @@
       "isAvailable": true,
       "description": "Chef's signature cottage cheese steaks marinated in Moroccan chermoula herbs, hung curd, and roasted over slow charcoal ember.",
       "image": "https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Signature Dish",
         "Tandoori"
@@ -465,8 +437,6 @@
       "isAvailable": true,
       "description": "Chunks of fresh malai paneer marinated in spiced mustard oil yogurt marinade, skewered with onions and capsicum in tandoor.",
       "image": "https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Classic Tandoor"
       ]
@@ -487,8 +457,6 @@
       "isAvailable": true,
       "description": "Plump button mushrooms filled with spiced cheese and spinach stuffing, glazed with tandoori marinade and fire-roasted.",
       "image": "https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Stuffed",
         "Smoky"
@@ -510,8 +478,6 @@
       "isAvailable": true,
       "description": "Fresh broccoli florets marinated in roasted garlic cream, cashewnut paste, and yellow cheddar, gently broiled in tandoor.",
       "image": "https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Garlic Love",
         "Mild"
@@ -533,8 +499,6 @@
       "isAvailable": true,
       "description": "A lavish platter of Paneer Tikka, Chermoula Cottage Cheese, Stuffed Mushrooms, Soya Chaap, and Velvet Seekh Kebabs with mint chutney.",
       "image": "https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Platter",
         "Family Size"
@@ -556,8 +520,6 @@
       "isAvailable": true,
       "description": "Crispy vegetable dumplings tossed in a sizzling wok with scallions, dark soy sauce, crushed ginger, and green chilies.",
       "image": "https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Indo-Chinese",
         "Classic"
@@ -579,8 +541,6 @@
       "isAvailable": true,
       "description": "Crispy cottage cheese cubes tossed with tri-color bell peppers, spring onions, and spicy red chili soy glaze.",
       "image": "https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Bestseller",
         "Spicy"
@@ -602,8 +562,6 @@
       "isAvailable": true,
       "description": "Delicate seasoned paneer fingers wrapped in crispy wonton noodle threads and fried to golden perfection, served with sweet chili sauce.",
       "image": "https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Extra Crispy",
         "Chef Special"
@@ -625,8 +583,6 @@
       "isAvailable": true,
       "description": "Crispy golden sweet corn and cheese balls tossed in hot Schezwan wok gravy with chopped cilantro.",
       "image": "https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Fusion"
       ]
@@ -647,8 +603,6 @@
       "isAvailable": true,
       "description": "Al dente pasta ribbons tossed in a rich, velvety Parmesan cream and roasted garlic sauce with sautéed mushrooms and herbs.",
       "image": "https://images.unsplash.com/photo-1621996346565-e3d5d6281290?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Creamy",
         "Italian"
@@ -670,8 +624,6 @@
       "isAvailable": true,
       "description": "Penne pasta enveloped in the perfect harmony of slow-cooked San Marzano tomato pomodoro and rich dairy white cream sauce.",
       "image": "https://images.unsplash.com/photo-1621996346565-e3d5d6281290?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Pink Sauce",
         "Bestseller"
@@ -693,8 +645,6 @@
       "isAvailable": true,
       "description": "Crispy chickpea falafels served with creamy tahini hummus, tzatziki dip, pickled vegetables, and warm pita bread pockets.",
       "image": "https://images.unsplash.com/photo-1621996346565-e3d5d6281290?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Mezze Platter",
         "Sharing"
@@ -716,8 +666,6 @@
       "isAvailable": true,
       "description": "Toasted artisanal French baguette topped with roasted garlic butter, fresh mozzarella, cheddar, and Italian oregano.",
       "image": "https://images.unsplash.com/photo-1621996346565-e3d5d6281290?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Cheesy"
       ]
@@ -738,8 +686,6 @@
       "isAvailable": true,
       "description": "Crispy sourdough crostini topped with diced vine tomatoes, extra virgin olive oil, garlic, basil, and balsamic reduction.",
       "image": "https://images.unsplash.com/photo-1621996346565-e3d5d6281290?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Fresh",
         "Appetizer"
@@ -761,8 +707,6 @@
       "isAvailable": true,
       "description": "Hand-stretched 11-inch thin crust with San Marzano Italian tomato sauce, melted fior di latte mozzarella, and fresh sweet basil.",
       "image": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=600&q=80",
-      "portion": "6 Slices (10\")",
-      "prepTime": "15-20 mins",
       "tags": [
         "Authentic",
         "Woodfired Style"
@@ -784,8 +728,6 @@
       "isAvailable": true,
       "description": "Loaded with black kalamata olives, bell peppers, button mushrooms, sweet corn, jalapenos, and mozzarella cheese.",
       "image": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=600&q=80",
-      "portion": "6 Slices (10\")",
-      "prepTime": "15-20 mins",
       "tags": [
         "Loaded",
         "Veggies"
@@ -807,8 +749,6 @@
       "isAvailable": true,
       "description": "Signature fusion pizza topped with spiced tandoori paneer tikka, rich butter makhani sauce, red onion rings, and fresh cilantro.",
       "image": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=600&q=80",
-      "portion": "6 Slices (10\")",
-      "prepTime": "15-20 mins",
       "tags": [
         "Fusion",
         "Chef Special"
@@ -830,8 +770,6 @@
       "isAvailable": true,
       "description": "Succulent cottage cheese cubes simmered in a luscious onion-tomato and cashew nut gravy finished with grated paneer and butter.",
       "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Rich Gravy",
         "Must Try"
@@ -853,8 +791,6 @@
       "isAvailable": true,
       "description": "Royal cottage cheese curry simmered in a fragrant roasted garlic and whole Indian spices gravy with a robust kick.",
       "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Garlic Infused",
         "Spicy"
@@ -876,8 +812,6 @@
       "isAvailable": true,
       "description": "Melange of fresh farm vegetables tossed in an authentic fiery Maharashtrian Kolhapuri red chili and whole spice gravy.",
       "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Spicy",
         "Authentic"
@@ -899,8 +833,6 @@
       "isAvailable": true,
       "description": "Garden fresh vegetables and diced paneer cooked in an earthen handi with a royal spinach and cashew nut green gravy.",
       "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Mild & Creamy"
       ]
@@ -921,8 +853,6 @@
       "isAvailable": true,
       "description": "Whole roasted jumbo cashews simmered in a creamy, velvety makhani gravy enriched with butter and aromatic kasuri methi.",
       "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Rich & Royal",
         "Cashew"
@@ -944,8 +874,6 @@
       "isAvailable": true,
       "description": "Comforting yellow toor lentils tempered with desi ghee, cumin seeds, garlic, ginger, and dried Kashmiri whole red chilies.",
       "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Desi Ghee",
         "Comfort Food"
@@ -967,8 +895,6 @@
       "isAvailable": true,
       "description": "Authentic Punjabi black urad lentils slow-simmered overnight with fresh cream, tomato reduction, and country butter.",
       "image": "https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Slow Cooked",
         "Creamy"
@@ -990,8 +916,6 @@
       "isAvailable": true,
       "description": "Long-grain fragrant steamed aged Basmati rice, light and fluffy.",
       "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Basmati"
       ]
@@ -1012,8 +936,6 @@
       "isAvailable": true,
       "description": "Aromatic Basmati rice tossed in pure cow ghee and fragrant roasted cumin seeds.",
       "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Ghee Roasted"
       ]
@@ -1034,8 +956,6 @@
       "isAvailable": true,
       "description": "Layered Basmati rice and spiced vegetables slow-cooked in a sealed handi with saffron and rose water, served with cucumber raita.",
       "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Dum Biryani",
         "Served with Raita"
@@ -1057,8 +977,6 @@
       "isAvailable": true,
       "description": "Traditional whole-wheat flatbread freshly baked on the walls of our clay tandoor oven.",
       "image": "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Whole Wheat"
       ]
@@ -1079,8 +997,6 @@
       "isAvailable": true,
       "description": "Multi-layered crispy and flaky Indian bread brushed with melted butter.",
       "image": "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Flaky Layers"
       ]
@@ -1101,8 +1017,6 @@
       "isAvailable": true,
       "description": "Classic soft and pillowy refined flour bread baked in tandoor and brushed generously with butter.",
       "image": "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Tandoor Fresh"
       ]
@@ -1123,8 +1037,6 @@
       "isAvailable": true,
       "description": "Tandoori naan topped with roasted minced garlic, fresh green chilies, and fresh coriander.",
       "image": "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Garlic & Chili"
       ]
@@ -1145,8 +1057,6 @@
       "isAvailable": true,
       "description": "Soft tandoor naan stuffed with gooey melted cheese and topped with golden toasted garlic.",
       "image": "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Loaded Cheese"
       ]
@@ -1167,8 +1077,6 @@
       "isAvailable": true,
       "description": "Exotic Japanese Yuzu citrus blended with bruised fresh mint, kaffir lime, and sparkling effervescence.",
       "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80",
-      "portion": "1 Serving",
-      "prepTime": "5-8 mins",
       "tags": [
         "Citrus",
         "Signature"
@@ -1190,8 +1098,6 @@
       "isAvailable": true,
       "description": "Tropical refresher crafted with fresh pineapple reduction, passionfruit cordial, and crushed coconut ice.",
       "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80",
-      "portion": "1 Serving",
-      "prepTime": "5-8 mins",
       "tags": [
         "Tropical",
         "Fruity"
@@ -1213,8 +1119,6 @@
       "isAvailable": true,
       "description": "Ripe Alphonso mango puree shaken with spicy ginger extract, fresh lime juice, and carbonated soda.",
       "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80",
-      "portion": "1 Serving",
-      "prepTime": "5-8 mins",
       "tags": [
         "Mango Lovers"
       ]
@@ -1235,8 +1139,6 @@
       "isAvailable": true,
       "description": "Crisp cooler with green apple notes, cucumber ribbons, garden mint, and sparkling tonic water.",
       "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80",
-      "portion": "1 Serving",
-      "prepTime": "5-8 mins",
       "tags": [
         "Cool & Crisp"
       ]
@@ -1257,8 +1159,6 @@
       "isAvailable": true,
       "description": "Vibrant blue curaçao flavor mixed with zesty lemon cordial and sparkling sprite over crushed ice.",
       "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80",
-      "portion": "1 Serving",
-      "prepTime": "5-8 mins",
       "tags": [
         "Vibrant"
       ]
@@ -1279,8 +1179,6 @@
       "isAvailable": true,
       "description": "Traditional churned spiced yogurt drink with roasted cumin, rock salt, ginger, and fresh mint.",
       "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80",
-      "portion": "1 Serving",
-      "prepTime": "5-8 mins",
       "tags": [
         "Digestive",
         "Traditional"
@@ -1302,8 +1200,6 @@
       "isAvailable": true,
       "description": "Thick and creamy sweet yogurt shake blended with Alphonso mango pulp and saffron strands.",
       "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80",
-      "portion": "1 Serving",
-      "prepTime": "5-8 mins",
       "tags": [
         "Thick Shake"
       ]
@@ -1324,8 +1220,6 @@
       "isAvailable": true,
       "description": "Chilled 250ml can of Red Bull energy drink.",
       "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80",
-      "portion": "1 Serving",
-      "prepTime": "5-8 mins",
       "tags": [
         "Energy"
       ]
@@ -1346,8 +1240,6 @@
       "isAvailable": true,
       "description": "Chilled premium carbonated mixer.",
       "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80",
-      "portion": "1 Serving",
-      "prepTime": "5-8 mins",
       "tags": [
         "Chilled"
       ]
@@ -1368,8 +1260,6 @@
       "isAvailable": true,
       "description": "Warm Belgian chocolate walnut brownie served on a sizzling hot plate with vanilla bean ice cream and hot chocolate fudge.",
       "image": "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Sizzling",
         "Chef Special"
@@ -1391,8 +1281,6 @@
       "isAvailable": true,
       "description": "Warm soft mawa dumplings soaked in cardamom sugar syrup, served over chilled saffron rabdi with pistachio slivers.",
       "image": "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Royal Sweet"
       ]
@@ -1413,8 +1301,6 @@
       "isAvailable": true,
       "description": "Two scoops of premium ice cream (Vanilla Bean / Belgian Dark Chocolate / Alphonso Mango / Roasted Almond).",
       "image": "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=600&q=80",
-      "portion": "Serves 1-2",
-      "prepTime": "15-20 mins",
       "tags": [
         "Ice Cream"
       ]

@@ -66,10 +66,10 @@
       <!-- Right Action Buttons (Sync, Table QR, Instagram) -->
       <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
         
-        <!-- Live Sync Button -->
-        <button onclick="fetchMenuData()" title="Sync Latest Menu" class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#0d2d24] hover:bg-[#153f33] text-[#ffdaa9] border border-[#dfb15b]/30 text-xs font-semibold flex items-center gap-1.5 transition shadow-sm">
-          <i class="fa-solid fa-rotate text-[11px] text-[#dfb15b]"></i>
-          <span class="hidden sm:inline">Sync</span>
+        <!-- Live Refresh Button -->
+        <button onclick="refreshMenu(event)" id="headerRefreshBtn" title="Refresh Live Menu" class="w-8 h-8 sm:w-auto sm:px-3 sm:py-1.5 rounded-xl bg-[#0d2d24] hover:bg-[#153f33] text-[#ffdaa9] border border-[#dfb15b]/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition shadow-sm active:scale-95 cursor-pointer">
+          <i id="headerRefreshIcon" class="fa-solid fa-rotate-right text-xs text-[#dfb15b]"></i>
+          <span class="hidden sm:inline">Refresh</span>
         </button>
 
         <!-- Table QR Modal Trigger -->
@@ -112,11 +112,11 @@
         "There is no sincerer love than the love of food."
       </p>
 
-      <!-- Address & Timings Pill (Guaranteed No Horizontal Blowout) -->
-      <div class="w-full px-2 mb-5 sm:mb-6">
-        <div class="inline-flex max-w-full items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-[#09221b]/80 border border-[#dfb15b]/25 text-[10px] sm:text-xs text-[#e8d8b9]/90 backdrop-blur-sm shadow-sm overflow-hidden">
-          <i class="fa-solid fa-location-dot text-[#dfb15b] text-[10px] shrink-0"></i>
-          <span class="truncate">Ramkatha Road, Beside Gunjan Park, Near SRK Sports Complex, Katargam, Surat • 11:00 AM - 11:00 PM</span>
+      <!-- Address & Timings Badge (Never Cuts Off, Wraps Gracefully) -->
+      <div class="w-full max-w-xl mx-auto px-2 mb-5 sm:mb-6 flex justify-center">
+        <div id="heroLocationContainer" class="inline-flex items-center justify-center gap-2 px-3.5 sm:px-5 py-2 sm:py-1.5 rounded-2xl sm:rounded-full bg-[#09221b]/80 border border-[#dfb15b]/25 text-[11px] sm:text-xs text-[#e8d8b9]/90 backdrop-blur-sm shadow-sm text-center leading-relaxed">
+          <i class="fa-solid fa-location-dot text-[#dfb15b] text-[11px] shrink-0"></i>
+          <span id="heroAddressText" class="break-words">Ramkatha Road, Beside Gunjan Park, Near SRK Sports Complex, Katargam, Surat</span>
         </div>
       </div>
 
@@ -226,13 +226,13 @@
         </div>
 
         <!-- Address & Timings -->
-        <div class="text-xs text-[#e8d8b9]/80 space-y-1">
-          <p class="flex items-center justify-center md:justify-start gap-1.5">
-            <i class="fa-solid fa-location-dot text-[#dfb15b] text-[11px]"></i>
+        <div class="text-xs text-[#e8d8b9]/80 space-y-2 max-w-md mx-auto md:mx-0 text-center md:text-left">
+          <p class="inline-flex items-start justify-center md:justify-start gap-2 text-left md:text-left leading-relaxed">
+            <i class="fa-solid fa-location-dot text-[#dfb15b] text-xs shrink-0 mt-0.5"></i>
             <span>Ramkatha Road, Beside Gunjan Park, Near SRK Sports Complex, Katargam, Surat, Gujarat</span>
           </p>
           <p class="flex items-center justify-center md:justify-start gap-1.5 text-[11px] text-[#dfb15b]">
-            <i class="fa-regular fa-clock text-[10px]"></i>
+            <i class="fa-regular fa-clock text-[11px] shrink-0"></i>
             <span>11:00 AM - 11:00 PM (All Days)</span>
           </p>
         </div>
@@ -271,8 +271,6 @@
           <div>
             <h3 id="modalDishName" class="text-xl font-bold font-serif text-[#0d2d24]">Dish Name</h3>
             <div class="flex items-center gap-3 text-xs text-[#5c6e67] mt-1">
-              <span id="modalPortion"><i class="fa-solid fa-plate-wheat mr-1 text-[#dfb15b]"></i> Serves 1-2</span>
-              <span id="modalPrepTime"><i class="fa-regular fa-clock mr-1 text-[#dfb15b]"></i> 15 mins</span>
               <span id="modalSpiceLevel">🌶️ Mild</span>
             </div>
           </div>
