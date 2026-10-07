@@ -1513,11 +1513,21 @@ function updateAdminLogoUI(url) {
   const adminLogoEl = document.getElementById('adminHeaderLogoContainer');
   const previewEl = document.getElementById('profLogoPreview');
   if (url) {
-    if (adminLogoEl) adminLogoEl.innerHTML = `<img src="${url}" alt="Logo" class="w-full h-full object-cover rounded-xl" />`;
-    if (previewEl) previewEl.innerHTML = `<img src="${url}" alt="Logo" class="w-full h-full object-cover rounded-xl" />`;
+    if (adminLogoEl) adminLogoEl.innerHTML = `<img src="${url}" alt="Logo" class="w-full h-full object-contain p-0.5" />`;
+    if (previewEl) previewEl.innerHTML = `<img src="${url}" alt="Logo" class="w-full h-full object-contain p-1" />`;
   } else {
-    if (adminLogoEl) adminLogoEl.innerHTML = `<i class="fa-solid fa-utensils"></i>`;
-    if (previewEl) previewEl.innerHTML = `<i class="fa-solid fa-utensils text-base"></i>`;
+    if (adminLogoEl) adminLogoEl.innerHTML = `
+      <div class="w-full h-full rounded-t-[13px] rounded-b-sm border border-[#dfb15b]/30 flex flex-col items-center justify-center bg-gradient-to-b from-[#10352a] to-[#09221b] overflow-hidden">
+        <i class="fa-solid fa-utensils text-[#dfb15b] text-[10px]"></i>
+        <span class="text-[5px] font-serif font-bold text-[#ffdaa9] leading-tight">LM</span>
+      </div>
+    `;
+    if (previewEl) previewEl.innerHTML = `
+      <div class="w-full h-full rounded-t-[20px] rounded-b-lg border border-[#dfb15b]/35 flex flex-col items-center justify-center bg-gradient-to-b from-[#10352a] to-[#09221b] overflow-hidden p-0.5 text-center">
+        <i class="fa-solid fa-utensils text-[#dfb15b] text-sm mb-0.5"></i>
+        <span class="text-[6px] font-serif font-bold tracking-widest text-[#ffdaa9] uppercase leading-none">LA MENSA</span>
+      </div>
+    `;
   }
 }
 

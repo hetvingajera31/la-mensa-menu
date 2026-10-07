@@ -224,32 +224,47 @@ function applySettingsToUI() {
   if (qrImg) qrImg.src = qrApiUrl;
   if (qrLink) qrLink.href = qrApiUrl;
 
-  // Restaurant Brand Logo (Menu Header, Hero Crest, Footer)
+  // Restaurant Brand Logo (Menu Header, Hero Crest [81x81], Footer)
   const logoUrl = s.logoUrl;
   const headerLogoEl = document.getElementById('headerLogoContainer');
   if (headerLogoEl) {
     if (logoUrl) {
-      headerLogoEl.innerHTML = `<img src="${logoUrl}" alt="${s.restaurantName || 'Logo'}" class="w-full h-full object-cover rounded-xl" />`;
+      headerLogoEl.innerHTML = `<img src="${logoUrl}" alt="${s.restaurantName || 'Logo'}" class="w-full h-full object-contain p-0.5" />`;
     } else {
-      headerLogoEl.innerHTML = `<i class="fa-solid fa-utensils"></i>`;
+      headerLogoEl.innerHTML = `
+        <div class="w-full h-full rounded-t-[13px] rounded-b-sm border border-[#dfb15b]/30 flex flex-col items-center justify-center bg-gradient-to-b from-[#10352a] to-[#09221b] overflow-hidden">
+          <i class="fa-solid fa-utensils text-[#dfb15b] text-[10px]"></i>
+          <span class="text-[5px] font-serif font-bold text-[#ffdaa9] leading-tight">LM</span>
+        </div>
+      `;
     }
   }
 
   const heroLogoEl = document.getElementById('heroLogoContainer');
   if (heroLogoEl) {
     if (logoUrl) {
-      heroLogoEl.innerHTML = `<img src="${logoUrl}" alt="${s.restaurantName || 'Logo'}" class="w-full h-full object-cover rounded-full" />`;
+      heroLogoEl.innerHTML = `<img src="${logoUrl}" alt="${s.restaurantName || 'Logo'}" class="w-full h-full object-contain p-1" />`;
     } else {
-      heroLogoEl.innerHTML = `<i class="fa-solid fa-utensils text-[#dfb15b] text-lg sm:text-xl"></i>`;
+      heroLogoEl.innerHTML = `
+        <div class="w-full h-full rounded-t-[23px] rounded-b-xl border border-[#dfb15b]/35 flex flex-col items-center justify-center bg-gradient-to-b from-[#10352a] to-[#09221b] overflow-hidden p-1 text-center">
+          <i class="fa-solid fa-utensils text-[#dfb15b] text-base mb-1"></i>
+          <span class="text-[7px] font-serif font-black tracking-widest text-[#ffdaa9] uppercase leading-none">LA MENSA</span>
+        </div>
+      `;
     }
   }
 
   const footerLogoEl = document.getElementById('footerLogoContainer');
   if (footerLogoEl) {
     if (logoUrl) {
-      footerLogoEl.innerHTML = `<img src="${logoUrl}" alt="${s.restaurantName || 'Logo'}" class="w-full h-full object-cover rounded-2xl" />`;
+      footerLogoEl.innerHTML = `<img src="${logoUrl}" alt="${s.restaurantName || 'Logo'}" class="w-full h-full object-contain p-1" />`;
     } else {
-      footerLogoEl.innerHTML = `<i class="fa-solid fa-utensils"></i>`;
+      footerLogoEl.innerHTML = `
+        <div class="w-full h-full rounded-t-[18px] rounded-b-lg border border-[#dfb15b]/35 flex flex-col items-center justify-center bg-gradient-to-b from-[#10352a] to-[#09221b] overflow-hidden p-0.5 text-center">
+          <i class="fa-solid fa-utensils text-[#dfb15b] text-sm mb-0.5"></i>
+          <span class="text-[6px] font-serif font-bold tracking-widest text-[#ffdaa9] uppercase leading-none">LA MENSA</span>
+        </div>
+      `;
     }
   }
 }
