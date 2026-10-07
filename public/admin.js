@@ -239,15 +239,20 @@ async function fetchAdminData() {
     if (draftRaw) {
       const draftObj = JSON.parse(draftRaw);
       if (draftObj && draftObj.items && draftObj.items.length) {
-        adminState.settings = draftObj.settings || adminState.settings;
-        adminState.categories = draftObj.categories || adminState.categories;
-        adminState.items = draftObj.items || adminState.items;
-        if (draftObj.quickFilters) adminState.quickFilters = draftObj.quickFilters;
-        if (draftObj.customDishOptions) adminState.customDishOptions = draftObj.customDishOptions;
-        if (draftObj.frontPageCards) adminState.frontPageCards = draftObj.frontPageCards;
-        adminState.draftChangesCount = draftObj.draftChangesCount || 1;
-        adminState.hasDraftChanges = true;
-        console.log('Restored unsaved local draft with', adminState.draftChangesCount, 'changes');
+        if (adminState.items && adminState.items.length > draftObj.items.length) {
+          console.log('Stale local draft ignored because cloud database has more/newer items (' + adminState.items.length + ' vs ' + draftObj.items.length + ')');
+          localStorage.removeItem(DRAFT_STORAGE_KEY);
+        } else {
+          adminState.settings = draftObj.settings || adminState.settings;
+          adminState.categories = draftObj.categories || adminState.categories;
+          adminState.items = draftObj.items || adminState.items;
+          if (draftObj.quickFilters) adminState.quickFilters = draftObj.quickFilters;
+          if (draftObj.customDishOptions) adminState.customDishOptions = draftObj.customDishOptions;
+          if (draftObj.frontPageCards) adminState.frontPageCards = draftObj.frontPageCards;
+          adminState.draftChangesCount = draftObj.draftChangesCount || 1;
+          adminState.hasDraftChanges = true;
+          console.log('Restored unsaved local draft with', adminState.draftChangesCount, 'changes');
+        }
       }
     }
   } catch (draftErr) {
