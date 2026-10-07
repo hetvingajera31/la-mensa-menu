@@ -256,6 +256,28 @@
             <option value="all">All Categories</option>
           </select>
 
+          <!-- Bulk Stock Action for Selected Category -->
+          <div id="dishCategoryBulkStockGroup" class="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onclick="applyBulkStockToCurrentCategory(true)"
+              title="Set items in selected category to In Stock"
+              class="px-2.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-xs flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+            >
+              <i class="fa-solid fa-circle-check text-[11px] text-emerald-600"></i>
+              <span id="bulkInStockBtnText">All In Stock</span>
+            </button>
+            <button
+              type="button"
+              onclick="applyBulkStockToCurrentCategory(false)"
+              title="Set items in selected category to Sold Out"
+              class="px-2.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-300 font-bold text-xs flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+            >
+              <i class="fa-solid fa-circle-xmark text-[11px] text-rose-600"></i>
+              <span id="bulkSoldOutBtnText">All Sold Out</span>
+            </button>
+          </div>
+
           <!-- Stock Filter Dropdown -->
           <select id="dishStockFilter" class="px-3 py-2 rounded-xl bg-[#f7f5ef] border border-[#e6e2d6] text-xs font-semibold text-stone-700 outline-none focus:ring-2 focus:ring-[#dfb15b]">
             <option value="all">All Stock Status</option>

@@ -718,7 +718,40 @@ function renderCategoriesGrid() {
             </button>
           </div>
 
-          <div class="flex items-center gap-1.5">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <!-- Bulk Stock Action Dropdown -->
+            <div class="relative inline-block" id="bulkStockDropdownWrap-${cat.id}">
+              <button
+                type="button"
+                onclick="toggleBulkStockDropdown(event, '${cat.id}')"
+                title="Bulk stock action for all ${totalInCat} dishes in ${cat.name}"
+                class="px-2.5 py-1.5 rounded-full text-[11px] font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer ${soldOutInCat === 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100' : (soldOutInCat === totalInCat ? 'bg-rose-50 text-rose-700 border border-rose-300 hover:bg-rose-100' : 'bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100')}"
+              >
+                <i class="fa-solid fa-boxes-stacked text-[10px]"></i>
+                <span>${soldOutInCat === 0 ? 'All In Stock' : (soldOutInCat === totalInCat ? 'All Sold Out' : `${totalInCat - soldOutInCat}/${totalInCat} In Stock`)}</span>
+                <i class="fa-solid fa-chevron-down text-[8px] opacity-70"></i>
+              </button>
+              
+              <div id="bulkStockMenu-${cat.id}" class="bulk-stock-menu hidden absolute right-0 mt-1 w-44 bg-white rounded-2xl shadow-xl border border-[#e6e2d6] py-1.5 z-30 text-xs font-bold divide-y divide-[#f5f2e9]">
+                <button
+                  type="button"
+                  onclick="setCategoryBulkStock('${cat.id}', true); hideAllBulkStockDropdowns();"
+                  class="w-full text-left px-3.5 py-2 hover:bg-emerald-50 text-emerald-700 flex items-center gap-2 transition cursor-pointer"
+                >
+                  <i class="fa-solid fa-circle-check text-emerald-600 text-xs"></i>
+                  <span>All In Stock</span>
+                </button>
+                <button
+                  type="button"
+                  onclick="setCategoryBulkStock('${cat.id}', false); hideAllBulkStockDropdowns();"
+                  class="w-full text-left px-3.5 py-2 hover:bg-rose-50 text-rose-600 flex items-center gap-2 transition cursor-pointer"
+                >
+                  <i class="fa-solid fa-circle-xmark text-rose-600 text-xs"></i>
+                  <span>All Sold Out</span>
+                </button>
+              </div>
+            </div>
+
             <!-- Shown / Unshown Interactive Toggle Button -->
             <button
               onclick="toggleCategoryVisibility('${cat.id}')"
@@ -760,6 +793,97 @@ function toggleCategoryVisibility(catId) {
   renderCategoriesGrid();
   markDraftChanged(`"${cat.name}" marked as ${newShown ? 'Shown' : 'Unshown'}`);
 }
+
+// Bulk Toggle Stock for All Dishes in a Specific Category
+function setCategoryBulkStock(categoryId, isAvailable) {
+  const cat = adminState.categories.find(c => c.id === categoryId);
+  const catName = cat ? cat.name : 'Category';
+  
+  const dishesInCat = adminState.items.filter(i => i.categoryId === categoryId);
+  if (dishesInCat.length === 0) {
+    showAdminToast(`No dishes found in "${catName}"`, 'info');
+    return;
+  }
+
+  let updatedCount = 0;
+  dishesInCat.forEach(item => {
+    item.isAvailable = Boolean(isAvailable);
+    updatedCount++;
+  });
+
+  updateMetrics();
+  renderDishesTable();
+  renderCategoriesGrid();
+  updateBulkStockBarUI();
+
+  const statusLabel = isAvailable ? 'In Stock' : 'Sold Out';
+  markDraftChanged(`All ${updatedCount} dishes in "${catName}" set to ${statusLabel}`);
+  showAdminToast(`All ${updatedCount} dishes in "${catName}" are now ${statusLabel}!`, 'success');
+}
+
+// Bulk Toggle for Current Filtered Category in Dishes Tab
+function applyBulkStockToCurrentCategory(isAvailable) {
+  const catFilter = adminState.categoryFilter;
+  const statusLabel = isAvailable ? 'In Stock' : 'Sold Out';
+
+  if (catFilter && catFilter !== 'all') {
+    setCategoryBulkStock(catFilter, isAvailable);
+  } else {
+    const totalDishes = adminState.items.length;
+    const confirmed = window.confirm(`Are you sure you want to set ALL ${totalDishes} dishes in the entire menu to "${statusLabel}"?`);
+    if (!confirmed) return;
+
+    adminState.items.forEach(item => {
+      item.isAvailable = Boolean(isAvailable);
+    });
+
+    updateMetrics();
+    renderDishesTable();
+    renderCategoriesGrid();
+    updateBulkStockBarUI();
+
+    markDraftChanged(`All ${totalDishes} dishes set to ${statusLabel}`);
+    showAdminToast(`All ${totalDishes} dishes in the menu are now ${statusLabel}!`, 'success');
+  }
+}
+
+// Dynamic button text for current selected category in Dishes tab
+function updateBulkStockBarUI() {
+  const catFilter = adminState.categoryFilter;
+  const inBtn = document.getElementById('bulkInStockBtnText');
+  const outBtn = document.getElementById('bulkSoldOutBtnText');
+  if (!inBtn || !outBtn) return;
+
+  if (catFilter && catFilter !== 'all') {
+    const cat = adminState.categories.find(c => c.id === catFilter);
+    const shortName = cat ? cat.name : 'Category';
+    inBtn.textContent = `In Stock (${shortName})`;
+    outBtn.textContent = `Sold Out (${shortName})`;
+  } else {
+    inBtn.textContent = 'All In Stock';
+    outBtn.textContent = 'All Sold Out';
+  }
+}
+
+// Category Card Dropdown Handlers
+function toggleBulkStockDropdown(event, catId) {
+  if (event) event.stopPropagation();
+  const menu = document.getElementById(`bulkStockMenu-${catId}`);
+  if (!menu) return;
+  const wasHidden = menu.classList.contains('hidden');
+  hideAllBulkStockDropdowns();
+  if (wasHidden) {
+    menu.classList.remove('hidden');
+  }
+}
+
+function hideAllBulkStockDropdowns() {
+  document.querySelectorAll('.bulk-stock-menu').forEach(m => m.classList.add('hidden'));
+}
+
+document.addEventListener('click', () => {
+  hideAllBulkStockDropdowns();
+});
 
 // Handle Move Category Input from card
 function handleCategoryMoveInput(catId) {
@@ -1271,6 +1395,8 @@ function populateCategoryDropdowns() {
       <option value="${c.id}">${c.name}</option>
     `).join('');
   }
+
+  updateBulkStockBarUI();
 }
 
 function setupEventListeners() {
@@ -1289,6 +1415,7 @@ function setupEventListeners() {
     catFilter.addEventListener('change', (e) => {
       adminState.categoryFilter = e.target.value;
       renderDishesTable();
+      updateBulkStockBarUI();
     });
   }
 
