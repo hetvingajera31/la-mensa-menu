@@ -665,27 +665,27 @@ function renderCategoriesGrid() {
     const isCatShown = cat.isShown !== false && !cat.isHidden;
 
     return `
-      <div class="bg-white rounded-2xl p-4 border ${isCatShown ? 'border-[#e6e2d6]' : 'border-stone-300 bg-stone-50/70 opacity-80'} shadow-xs flex items-center justify-between gap-3 hover:border-[#dfb15b] transition">
+      <div class="bg-white rounded-2xl p-3.5 sm:p-4 border ${isCatShown ? 'border-[#e6e2d6]' : 'border-stone-300 bg-stone-50/70 opacity-80'} shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 hover:border-[#dfb15b] transition">
         
-        <!-- Left: Index + Name & Counts -->
-        <div class="flex items-center gap-3 min-w-0">
-          <div class="w-8 h-8 rounded-xl ${isCatShown ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-stone-100 text-stone-500 border-stone-200'} font-bold text-xs flex items-center justify-center border shrink-0">
+        <!-- Top (Mobile) / Left (Desktop): Index + Category Name & Subtitle -->
+        <div class="flex items-center gap-3 min-w-0 w-full sm:w-auto">
+          <div class="w-8 h-8 rounded-xl ${isCatShown ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-stone-100 text-stone-500 border-stone-200'} font-bold text-xs flex items-center justify-center border shrink-0 shadow-xs">
             ${index + 1}
           </div>
-          <div class="min-w-0">
-            <h4 class="font-bold text-sm ${isCatShown ? 'text-[#0d2d24]' : 'text-stone-500 line-through decoration-stone-400'} truncate">
+          <div class="min-w-0 flex-1">
+            <h4 class="font-bold text-sm sm:text-base ${isCatShown ? 'text-[#0d2d24]' : 'text-stone-500 line-through decoration-stone-400'} truncate">
               ${cat.name}
             </h4>
-            <div class="text-[11px] text-stone-500 mt-0.5 truncate">
-              Section • <strong class="${isCatShown ? 'text-emerald-700' : 'text-stone-500'}">${totalInCat} dishes</strong>
-              ${soldOutInCat > 0 ? `<span class="text-rose-600 font-semibold ml-1.5">• ${soldOutInCat} Sold Out</span>` : ''}
-              ${!isCatShown ? `<span class="text-amber-800 font-bold ml-1.5 px-1.5 py-0.5 rounded bg-amber-100 border border-amber-300">Hidden from Menu</span>` : ''}
+            <div class="text-[11px] text-stone-500 mt-0.5 flex items-center flex-wrap gap-1">
+              <span>Section • <strong class="${isCatShown ? 'text-emerald-700' : 'text-stone-500'}">${totalInCat} dishes</strong></span>
+              ${soldOutInCat > 0 ? `<span class="text-rose-600 font-semibold ml-1">• ${soldOutInCat} Sold Out</span>` : ''}
+              ${!isCatShown ? `<span class="text-amber-800 font-bold ml-1 px-1.5 py-0.2 rounded bg-amber-100 border border-amber-300 text-[10px]">Hidden from Menu</span>` : ''}
             </div>
           </div>
         </div>
 
-        <!-- Right: Move Controls [Input] [Move] [↑] [↓], Shown/Unshown Button, Edit, Delete -->
-        <div class="flex items-center gap-1.5 shrink-0">
+        <!-- Bottom (Mobile) / Right (Desktop): Move Controls, Shown/Unshown Button, Edit, Delete -->
+        <div class="flex items-center justify-between sm:justify-end gap-1.5 w-full sm:w-auto pt-2.5 sm:pt-0 border-t sm:border-t-0 border-[#f0eee6] shrink-0">
           
           <!-- Move Order Box [ Number Input ] [ Move Button ] [ ↑ ] [ ↓ ] (Matches Screenshot media_1791288676413.png) -->
           <div class="flex items-center gap-1 bg-[#f7f5ef] border border-[#e6e2d6] rounded-xl p-1 text-xs">
@@ -713,25 +713,27 @@ function renderCategoriesGrid() {
             </button>
           </div>
 
-          <!-- Shown / Unshown Interactive Toggle Button -->
-          <button
-            onclick="toggleCategoryVisibility('${cat.id}')"
-            title="Click to ${isCatShown ? 'hide category from' : 'show category in'} digital menu"
-            class="px-2.5 py-1 rounded-full text-[11px] font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer ${isCatShown ? 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100' : 'bg-stone-100 text-stone-600 border border-stone-300 hover:bg-stone-200'}"
-          >
-            <i class="fa-solid ${isCatShown ? 'fa-eye text-emerald-600' : 'fa-eye-slash text-stone-400'} text-[10px]"></i>
-            <span>${isCatShown ? 'Shown' : 'Unshown'}</span>
-          </button>
+          <div class="flex items-center gap-1.5">
+            <!-- Shown / Unshown Interactive Toggle Button -->
+            <button
+              onclick="toggleCategoryVisibility('${cat.id}')"
+              title="Click to ${isCatShown ? 'hide category from' : 'show category in'} digital menu"
+              class="px-2.5 py-1.5 rounded-full text-[11px] font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer ${isCatShown ? 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100' : 'bg-stone-100 text-stone-600 border border-stone-300 hover:bg-stone-200'}"
+            >
+              <i class="fa-solid ${isCatShown ? 'fa-eye text-emerald-600' : 'fa-eye-slash text-stone-400'} text-[10px]"></i>
+              <span>${isCatShown ? 'Shown' : 'Unshown'}</span>
+            </button>
 
-          <!-- Edit Button -->
-          <button onclick="openEditCategoryModal('${cat.id}')" title="Edit Category" class="w-8 h-8 rounded-xl bg-[#f7f5ef] hover:bg-[#ffdaa9] text-stone-700 hover:text-[#0d2d24] flex items-center justify-center transition border border-[#e6e2d6]">
-            <i class="fa-solid fa-pen-to-square text-xs"></i>
-          </button>
+            <!-- Edit Button -->
+            <button onclick="openEditCategoryModal('${cat.id}')" title="Edit Category" class="w-8 h-8 rounded-xl bg-[#f7f5ef] hover:bg-[#ffdaa9] text-stone-700 hover:text-[#0d2d24] flex items-center justify-center transition border border-[#e6e2d6]">
+              <i class="fa-solid fa-pen-to-square text-xs"></i>
+            </button>
 
-          <!-- Delete Button -->
-          <button onclick="deleteCategory('${cat.id}', '${cat.name.replace(/'/g, "\\'")}', ${totalInCat})" title="Delete Category" class="w-8 h-8 rounded-xl bg-[#f7f5ef] hover:bg-rose-100 text-stone-700 hover:text-rose-600 flex items-center justify-center transition border border-[#e6e2d6]">
-            <i class="fa-solid fa-trash text-xs"></i>
-          </button>
+            <!-- Delete Button -->
+            <button onclick="deleteCategory('${cat.id}', '${cat.name.replace(/'/g, "\\'")}', ${totalInCat})" title="Delete Category" class="w-8 h-8 rounded-xl bg-[#f7f5ef] hover:bg-rose-100 text-stone-700 hover:text-rose-600 flex items-center justify-center transition border border-[#e6e2d6]">
+              <i class="fa-solid fa-trash text-xs"></i>
+            </button>
+          </div>
 
         </div>
 
