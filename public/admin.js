@@ -1,3 +1,19 @@
+const DISH_PLACEHOLDER_IMG = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';
+
+function isDishImageEmpty(url) {
+  const u = (url || '').trim();
+  if (!u) return true;
+  return u.indexOf('photo-1546069901-ba9599a7e63c') !== -1;
+}
+
+function resolveDishImage(item) {
+  const cat = (adminState.categories || []).find(c => c.id === item.categoryId);
+  const categoryImg = cat && cat.defaultImage ? cat.defaultImage.trim() : '';
+  if (cat && cat.forceImage && categoryImg) return categoryImg;
+  if (!isDishImageEmpty(item.image)) return item.image;
+  return categoryImg || DISH_PLACEHOLDER_IMG;
+}
+
 // Admin Application State (Synchronized with Firebase Cloud)
 const adminState = {
   settings: {},
@@ -683,9 +699,13 @@ function renderCategoriesGrid() {
         
         <!-- Top (Mobile) / Left (Desktop): Index + Category Name & Subtitle -->
         <div class="flex items-center gap-3 min-w-0 w-full sm:w-auto">
+          ${cat.defaultImage ? `
+          <img src="${cat.defaultImage}" alt="" class="w-8 h-8 rounded-xl object-cover border border-[#e6e2d6] shrink-0" />
+          ` : `
           <div class="w-8 h-8 rounded-xl ${isCatShown ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-stone-100 text-stone-500 border-stone-200'} font-bold text-xs flex items-center justify-center border shrink-0 shadow-xs">
             ${index + 1}
           </div>
+          `}
           <div class="min-w-0 flex-1">
             <h4 class="font-bold text-sm sm:text-base ${isCatShown ? 'text-[#0d2d24]' : 'text-stone-500 line-through decoration-stone-400'} truncate">
               ${cat.name}
@@ -693,6 +713,7 @@ function renderCategoriesGrid() {
             <div class="text-[11px] text-stone-500 mt-0.5 flex items-center flex-wrap gap-1">
               <span>Section • <strong class="${isCatShown ? 'text-emerald-700' : 'text-stone-500'}">${totalInCat} dishes</strong></span>
               ${soldOutInCat > 0 ? `<span class="text-rose-600 font-semibold ml-1">• ${soldOutInCat} Sold Out</span>` : ''}
+              ${cat.defaultImage ? `<span class="text-[#0d2d24] font-semibold ml-1">• Category image set</span>` : ''}
               ${!isCatShown ? `<span class="text-amber-800 font-bold ml-1 px-1.5 py-0.2 rounded bg-amber-100 border border-amber-300 text-[10px]">Hidden from Menu</span>` : ''}
             </div>
           </div>
@@ -882,15 +903,29 @@ function openBulkCategoryImageModal(categoryId) {
   populateCategoryDropdowns();
   const modal = document.getElementById('bulkCategoryImageModal');
   const sel = document.getElementById('bulkCatImageCategory');
-  const urlInput = document.getElementById('bulkCatImageUrl');
   const statusEl = document.getElementById('bulkCatImageStatus');
   const fileInput = document.getElementById('bulkCatImageFile');
   if (sel) sel.value = categoryId || '';
-  if (urlInput) urlInput.value = '';
   if (statusEl) statusEl.textContent = '';
   if (fileInput) fileInput.value = '';
-  previewBulkCategoryImage();
+  syncBulkCatImageFromCategory();
   if (modal) modal.classList.remove('hidden');
+}
+
+function syncBulkCatImageFromCategory() {
+  const sel = document.getElementById('bulkCatImageCategory');
+  const urlInput = document.getElementById('bulkCatImageUrl');
+  const categoryId = sel ? sel.value : '';
+  const cat = adminState.categories.find(c => c.id === categoryId);
+  if (urlInput) urlInput.value = cat && cat.defaultImage ? cat.defaultImage : '';
+  const emptyRadio = document.querySelector('input[name="bulkCatImageMode"][value="empty"]');
+  const replaceRadio = document.querySelector('input[name="bulkCatImageMode"][value="replace"]');
+  if (cat && cat.forceImage) {
+    if (replaceRadio) replaceRadio.checked = true;
+  } else if (emptyRadio) {
+    emptyRadio.checked = true;
+  }
+  previewBulkCategoryImage();
 }
 
 function closeBulkCategoryImageModal() {
@@ -933,8 +968,8 @@ async function uploadBulkCategoryImage(e) {
       const url = data.data.display_url || data.data.url;
       if (urlInput) urlInput.value = url;
       previewBulkCategoryImage();
-      if (statusEl) statusEl.innerHTML = '<span class="text-emerald-600 font-bold">✓ Uploaded. Click Apply to All Dishes.</span>';
-      showAdminToast('Image uploaded. Apply it to the category.', 'success');
+      if (statusEl) statusEl.innerHTML = '<span class="text-emerald-600 font-bold">✓ Uploaded. Click Save Category Image.</span>';
+      showAdminToast('Image uploaded. Save it to the category.', 'success');
     } else {
       throw new Error(data.error ? data.error.message : 'Upload failed');
     }
@@ -946,6 +981,8 @@ async function uploadBulkCategoryImage(e) {
 function applyBulkCategoryImage() {
   const categoryId = (document.getElementById('bulkCatImageCategory') || {}).value || '';
   const imageUrl = ((document.getElementById('bulkCatImageUrl') || {}).value || '').trim();
+  const modeEl = document.querySelector('input[name="bulkCatImageMode"]:checked');
+  const replaceAll = modeEl && modeEl.value === 'replace';
 
   if (!categoryId) {
     showAdminToast('Please select a category.', 'warning');
@@ -957,26 +994,36 @@ function applyBulkCategoryImage() {
   }
 
   const cat = adminState.categories.find(c => c.id === categoryId);
-  const catName = cat ? cat.name : 'Category';
-  const dishesInCat = adminState.items.filter(i => i.categoryId === categoryId);
-
-  if (dishesInCat.length === 0) {
-    showAdminToast(`No dishes found in "${catName}"`, 'info');
+  if (!cat) {
+    showAdminToast('Category not found.', 'warning');
     return;
   }
 
-  const confirmed = window.confirm(`Apply this image to all ${dishesInCat.length} dishes in "${catName}"? Existing dish photos will be replaced.`);
-  if (!confirmed) return;
+  const catName = cat.name;
+  const dishesInCat = adminState.items.filter(i => i.categoryId === categoryId);
 
-  dishesInCat.forEach(item => {
-    item.image = imageUrl;
-  });
+  if (replaceAll && dishesInCat.length > 0) {
+    const confirmed = window.confirm(`Replace photos on all ${dishesInCat.length} dishes in "${catName}"? Unique dish photos will be overwritten.`);
+    if (!confirmed) return;
+    dishesInCat.forEach(item => {
+      item.image = imageUrl;
+    });
+  }
+
+  cat.defaultImage = imageUrl;
+  cat.forceImage = Boolean(replaceAll);
 
   renderDishesTable();
   renderCategoriesGrid();
   closeBulkCategoryImageModal();
-  markDraftChanged(`Same image applied to all ${dishesInCat.length} dishes in "${catName}"`);
-  showAdminToast(`Image applied to all ${dishesInCat.length} dishes in "${catName}". Save draft to publish.`, 'success');
+
+  if (replaceAll) {
+    markDraftChanged(`Category image saved and applied to all dishes in "${catName}"`);
+    showAdminToast(`Category image saved. All ${dishesInCat.length} dishes in "${catName}" now use it. Save draft to publish.`, 'success');
+  } else {
+    markDraftChanged(`Category default image saved for "${catName}"`);
+    showAdminToast(`Category image saved for "${catName}". Dishes without their own photo will use it. Save draft to publish.`, 'success');
+  }
 }
 
 // Category Card Dropdown Handlers

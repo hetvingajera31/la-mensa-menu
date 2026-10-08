@@ -18,7 +18,16 @@
     "openTime": "11:00 AM",
     "closeTime": "11:30 PM",
     "enableDirectOrders": true,
-    "enableWhatsAppOrders": true
+    "enableWhatsAppOrders": true,
+    "announcement": "✨ Welcome to La Mensa! Freshly prepared artisanal multi-cuisine delicacies. No artificial food colors or MSG.",
+    "bgImgUrl": "",
+    "instagramUrl": "https://www.instagram.com/lamensa_multicuisine",
+    "logoUrl": "https://i.ibb.co/20dsPrS3/471624437-579361001621057-1918167235595680652-n.jpg",
+    "mapsUrl": "https://goo.gl/maps/BPHVUQhLn2WfJgUg7",
+    "profileImgUrl": "",
+    "reviewUrl": "https://g.page/r/review",
+    "subtitle": "MULTI CUISINE",
+    "timings": "11:00 AM - 11:00 PM (All Days)"
   },
   "categories": [
     {

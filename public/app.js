@@ -1,3 +1,19 @@
+const DISH_PLACEHOLDER_IMG = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';
+
+function isDishImageEmpty(url) {
+  const u = (url || '').trim();
+  if (!u) return true;
+  return u.indexOf('photo-1546069901-ba9599a7e63c') !== -1;
+}
+
+function resolveDishImage(item) {
+  const cat = (state.categories || []).find(c => c.id === item.categoryId);
+  const categoryImg = cat && cat.defaultImage ? cat.defaultImage.trim() : '';
+  if (cat && cat.forceImage && categoryImg) return categoryImg;
+  if (!isDishImageEmpty(item.image)) return item.image;
+  return categoryImg || DISH_PLACEHOLDER_IMG;
+}
+
 // Global App State (View Only)
 const state = {
   settings: {},
@@ -577,7 +593,7 @@ function openDishModal(itemId) {
   const modal = document.getElementById('dishModal');
   const card = document.getElementById('dishModalCard');
 
-  document.getElementById('modalDishImg').src = item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';
+  document.getElementById('modalDishImg').src = resolveDishImage(item);
   document.getElementById('modalDishName').textContent = item.name;
   document.getElementById('modalPrice').textContent = `${currency}${item.price}`;
   

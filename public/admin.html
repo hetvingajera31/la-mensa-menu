@@ -889,7 +889,7 @@
       <div class="flex items-center justify-between pb-3 mb-3 border-b border-[#f0eee6]">
         <div>
           <h3 class="font-serif font-bold text-base text-[#0d2d24]">Set Category Image</h3>
-          <p class="text-[11px] text-stone-500 mt-0.5">One image will be applied to every dish in the selected category.</p>
+          <p class="text-[11px] text-stone-500 mt-0.5">Saved on the category. Dishes without their own photo use this image automatically.</p>
         </div>
         <button type="button" onclick="closeBulkCategoryImageModal()" class="text-stone-400 hover:text-stone-700 p-1">
           <i class="fa-solid fa-xmark text-lg"></i>
@@ -899,7 +899,7 @@
       <div class="space-y-4 text-xs">
         <div>
           <label class="block font-bold text-stone-700 mb-1">Category *</label>
-          <select id="bulkCatImageCategory" class="w-full px-3.5 py-2.5 rounded-xl border border-[#dcd7c9] outline-none font-semibold text-[#0d2d24]">
+          <select id="bulkCatImageCategory" onchange="syncBulkCatImageFromCategory()" class="w-full px-3.5 py-2.5 rounded-xl border border-[#dcd7c9] outline-none font-semibold text-[#0d2d24]">
             <option value="">Select category</option>
           </select>
         </div>
@@ -915,6 +915,23 @@
           </div>
           <span id="bulkCatImageStatus" class="text-[11px] text-stone-500 mt-1 block"></span>
         </div>
+        <div>
+          <label class="block font-bold text-stone-700 mb-1.5">How to apply</label>
+          <label class="flex items-start gap-2 p-2.5 rounded-xl border border-[#e6e2d6] bg-[#faf9f5] cursor-pointer mb-1.5">
+            <input type="radio" name="bulkCatImageMode" value="empty" class="mt-0.5" checked />
+            <span>
+              <span class="font-bold text-[#0d2d24] block">Only dishes without a photo</span>
+              <span class="text-stone-500">Keeps unique dish photos. Empty dishes use this category image.</span>
+            </span>
+          </label>
+          <label class="flex items-start gap-2 p-2.5 rounded-xl border border-[#e6e2d6] bg-[#faf9f5] cursor-pointer">
+            <input type="radio" name="bulkCatImageMode" value="replace" class="mt-0.5" />
+            <span>
+              <span class="font-bold text-[#0d2d24] block">Replace all dish photos</span>
+              <span class="text-stone-500">Overwrites every dish photo in this category with this image.</span>
+            </span>
+          </label>
+        </div>
         <div id="bulkCatImagePreviewWrap" class="hidden">
           <img id="bulkCatImagePreview" alt="Preview" class="w-full h-36 object-cover rounded-2xl border border-[#e6e2d6]" />
         </div>
@@ -923,7 +940,7 @@
             Cancel
           </button>
           <button type="button" onclick="applyBulkCategoryImage()" class="px-5 py-2 rounded-xl bg-[#0d2d24] text-[#ffdaa9] font-bold hover:bg-[#153f33] shadow">
-            Apply to All Dishes
+            Save Category Image
           </button>
         </div>
       </div>
@@ -940,6 +957,6 @@
   <script src="firebase-config.js?v=2.3"></script>
 
   <!-- Admin Controller Script -->
-  <script src="admin.js?v=2.4"></script>
+  <script src="admin.js?v=2.5"></script>
 </body>
 </html>
