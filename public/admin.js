@@ -771,6 +771,10 @@ function renderCategoriesGrid() {
               <span>${isCatShown ? 'Shown' : 'Unshown'}</span>
             </button>
 
+            <button onclick="openBulkCategoryImageModal('${cat.id}')" title="Set same image on all dishes in this category" class="w-8 h-8 rounded-xl bg-[#f7f5ef] hover:bg-[#ffdaa9] text-stone-700 hover:text-[#0d2d24] flex items-center justify-center transition border border-[#e6e2d6]">
+              <i class="fa-solid fa-images text-xs"></i>
+            </button>
+
             <!-- Edit Button -->
             <button onclick="openEditCategoryModal('${cat.id}')" title="Edit Category" class="w-8 h-8 rounded-xl bg-[#f7f5ef] hover:bg-[#ffdaa9] text-stone-700 hover:text-[#0d2d24] flex items-center justify-center transition border border-[#e6e2d6]">
               <i class="fa-solid fa-pen-to-square text-xs"></i>
@@ -872,6 +876,107 @@ function updateBulkStockBarUI() {
     inBtn.textContent = 'All In Stock';
     outBtn.textContent = 'All Sold Out';
   }
+}
+
+function openBulkCategoryImageModal(categoryId) {
+  populateCategoryDropdowns();
+  const modal = document.getElementById('bulkCategoryImageModal');
+  const sel = document.getElementById('bulkCatImageCategory');
+  const urlInput = document.getElementById('bulkCatImageUrl');
+  const statusEl = document.getElementById('bulkCatImageStatus');
+  const fileInput = document.getElementById('bulkCatImageFile');
+  if (sel) sel.value = categoryId || '';
+  if (urlInput) urlInput.value = '';
+  if (statusEl) statusEl.textContent = '';
+  if (fileInput) fileInput.value = '';
+  previewBulkCategoryImage();
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeBulkCategoryImageModal() {
+  const modal = document.getElementById('bulkCategoryImageModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function previewBulkCategoryImage() {
+  const urlInput = document.getElementById('bulkCatImageUrl');
+  const wrap = document.getElementById('bulkCatImagePreviewWrap');
+  const img = document.getElementById('bulkCatImagePreview');
+  const url = urlInput ? urlInput.value.trim() : '';
+  if (url && wrap && img) {
+    img.src = url;
+    wrap.classList.remove('hidden');
+  } else if (wrap) {
+    wrap.classList.add('hidden');
+  }
+}
+
+async function uploadBulkCategoryImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const statusEl = document.getElementById('bulkCatImageStatus');
+  const urlInput = document.getElementById('bulkCatImageUrl');
+  const key = window.IMGBB_API_KEY || '1c4e7f2fb1d5bcd0570a5894a27546db';
+
+  if (statusEl) statusEl.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Uploading to ImgBB...';
+
+  try {
+    const formData = new FormData();
+    formData.append('image', file);
+    const res = await fetch(`https://api.imgbb.com/1/upload?key=${key}`, {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if (data.success) {
+      const url = data.data.display_url || data.data.url;
+      if (urlInput) urlInput.value = url;
+      previewBulkCategoryImage();
+      if (statusEl) statusEl.innerHTML = '<span class="text-emerald-600 font-bold">✓ Uploaded. Click Apply to All Dishes.</span>';
+      showAdminToast('Image uploaded. Apply it to the category.', 'success');
+    } else {
+      throw new Error(data.error ? data.error.message : 'Upload failed');
+    }
+  } catch (err) {
+    if (statusEl) statusEl.innerHTML = '<span class="text-rose-600">Failed: ' + err.message + '</span>';
+  }
+}
+
+function applyBulkCategoryImage() {
+  const categoryId = (document.getElementById('bulkCatImageCategory') || {}).value || '';
+  const imageUrl = ((document.getElementById('bulkCatImageUrl') || {}).value || '').trim();
+
+  if (!categoryId) {
+    showAdminToast('Please select a category.', 'warning');
+    return;
+  }
+  if (!imageUrl) {
+    showAdminToast('Please upload an image or paste an image URL.', 'warning');
+    return;
+  }
+
+  const cat = adminState.categories.find(c => c.id === categoryId);
+  const catName = cat ? cat.name : 'Category';
+  const dishesInCat = adminState.items.filter(i => i.categoryId === categoryId);
+
+  if (dishesInCat.length === 0) {
+    showAdminToast(`No dishes found in "${catName}"`, 'info');
+    return;
+  }
+
+  const confirmed = window.confirm(`Apply this image to all ${dishesInCat.length} dishes in "${catName}"? Existing dish photos will be replaced.`);
+  if (!confirmed) return;
+
+  dishesInCat.forEach(item => {
+    item.image = imageUrl;
+  });
+
+  renderDishesTable();
+  renderCategoriesGrid();
+  closeBulkCategoryImageModal();
+  markDraftChanged(`Same image applied to all ${dishesInCat.length} dishes in "${catName}"`);
+  showAdminToast(`Image applied to all ${dishesInCat.length} dishes in "${catName}". Save draft to publish.`, 'success');
 }
 
 // Category Card Dropdown Handlers
@@ -1390,6 +1495,7 @@ async function confirmFactoryReset() {
 function populateCategoryDropdowns() {
   const filterSel = document.getElementById('dishCategoryFilter');
   const modalSel = document.getElementById('dishFormCategory');
+  const bulkSel = document.getElementById('bulkCatImageCategory');
 
   if (filterSel) {
     const curr = filterSel.value;
@@ -1403,6 +1509,16 @@ function populateCategoryDropdowns() {
     modalSel.innerHTML = adminState.categories.map(c => `
       <option value="${c.id}">${c.name}</option>
     `).join('');
+  }
+
+  if (bulkSel) {
+    const currBulk = bulkSel.value;
+    bulkSel.innerHTML = '<option value="">Select category</option>' + adminState.categories.map(c => `
+      <option value="${c.id}">${c.name}</option>
+    `).join('');
+    if (currBulk && adminState.categories.some(c => c.id === currBulk)) {
+      bulkSel.value = currBulk;
+    }
   }
 
   updateBulkStockBarUI();
