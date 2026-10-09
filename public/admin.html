@@ -307,11 +307,17 @@
           </select>
         </div>
 
-        <!-- Add Dish CTA -->
-        <button onclick="openAddDishModal()" class="px-4 py-2.5 rounded-xl bg-[#0d2d24] hover:bg-[#153f33] text-[#ffdaa9] font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-sm shrink-0">
-          <i class="fa-solid fa-plus text-[11px]"></i>
-          <span>Add New Dish</span>
-        </button>
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="openBulkBadgesModal()" class="px-3.5 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-xs shrink-0" title="Bulk apply or remove badges across a category">
+            <i class="fa-solid fa-tags text-amber-700"></i>
+            <span>Bulk Badges</span>
+          </button>
+          <button onclick="openAddDishModal()" class="px-4 py-2.5 rounded-xl bg-[#0d2d24] hover:bg-[#153f33] text-[#ffdaa9] font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-sm shrink-0">
+            <i class="fa-solid fa-plus text-[11px]"></i>
+            <span>Add New Dish</span>
+          </button>
+        </div>
 
       </div>
 
@@ -459,19 +465,44 @@
               <!-- Dynamically populated via JS -->
             </div>
 
-            <!-- Add Filter Dropdown -->
-            <div class="flex items-center gap-2 pt-2">
-              <select id="addQuickFilterSelect" class="flex-1 px-3 py-2 rounded-xl bg-white border border-[#dcd7c9] text-xs font-medium outline-none">
-                <option value="">Choose a filter to add...</option>
-                <option value="Jain Available">Jain Available</option>
-                <option value="Chef's Specials">Chef's Specials</option>
-                <option value="Bestsellers">Bestsellers</option>
-                <option value="Mocktails & Beverages">Mocktails & Beverages</option>
-                <option value="Desserts">Desserts</option>
-              </select>
-              <button type="button" onclick="addQuickFilter()" class="px-4 py-2 rounded-xl bg-stone-300 hover:bg-stone-400 text-[#0d2d24] font-bold text-xs transition">
-                + Add Filter
-              </button>
+            <!-- Add Filter Controls: Text input + Category dropdown -->
+            <div class="pt-3 border-t border-[#e6e2d6] space-y-2">
+              <label class="block text-[11px] font-bold text-[#0d2d24] uppercase tracking-wider">
+                Add Filter or Category to Search Bar
+              </label>
+              <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                <div class="sm:col-span-6">
+                  <input
+                    type="text"
+                    id="addQuickFilterTextInput"
+                    placeholder="Type name (e.g. Soups, Italian, Sizzlers)..."
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#dcd7c9] text-xs font-semibold text-[#0d2d24] outline-none focus:ring-2 focus:ring-[#dfb15b]"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault();addQuickFilter();}"
+                  />
+                </div>
+                <div class="sm:col-span-4">
+                  <select
+                    id="addQuickFilterCategorySelect"
+                    onchange="onQuickFilterCategorySelectChange()"
+                    class="w-full px-3 py-2.5 rounded-xl bg-white border border-[#dcd7c9] text-xs font-medium text-stone-700 outline-none focus:ring-2 focus:ring-[#dfb15b]"
+                  >
+                    <option value="">-- Or Pick Category --</option>
+                  </select>
+                </div>
+                <div class="sm:col-span-2">
+                  <button
+                    type="button"
+                    onclick="addQuickFilter()"
+                    class="w-full h-full min-h-[38px] px-3 py-2 rounded-xl bg-[#0d2d24] hover:bg-[#153f33] text-[#ffdaa9] font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-sm"
+                  >
+                    <i class="fa-solid fa-plus text-[10px]"></i>
+                    <span>+ Add</span>
+                  </button>
+                </div>
+              </div>
+              <p class="text-[11px] text-stone-500">
+                Type any category or search filter name above, or choose an existing category from the dropdown to add it to customer menu chips.
+              </p>
             </div>
           </div>
 
@@ -944,6 +975,115 @@
           </button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ================= BULK DISH BADGES / OPTIONS MODAL ================= -->
+  <div id="bulkBadgesModal" class="fixed inset-0 z-50 bg-[#09221b]/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-[#e6e2d6] space-y-4 max-h-[90vh] overflow-y-auto">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-[#f0eee6]">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 flex items-center justify-center text-sm shadow-xs shrink-0">
+            <i class="fa-solid fa-tags"></i>
+          </div>
+          <div>
+            <h3 class="font-serif font-bold text-base text-[#0d2d24]">Category Bulk Badges Editor</h3>
+            <p class="text-[11px] text-stone-500">Apply or remove dish badges in bulk without opening each product</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeBulkBadgesModal()" class="text-stone-400 hover:text-stone-700 p-1.5 rounded-xl hover:bg-stone-100 transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Step 1: Select Target Category -->
+      <div>
+        <label class="block font-bold text-[#0d2d24] text-xs uppercase tracking-wider mb-1.5">
+          1. Select Category
+        </label>
+        <div class="flex items-center gap-2">
+          <select id="bulkBadgeCategorySelect" onchange="updateBulkBadgeDishCount()" class="flex-1 px-3.5 py-2.5 rounded-xl bg-[#faf9f5] border border-[#dcd7c9] text-xs font-semibold text-[#0d2d24] outline-none focus:ring-2 focus:ring-[#dfb15b]">
+            <!-- Dynamically populated -->
+          </select>
+        </div>
+        <div class="flex items-center justify-between mt-1 px-1">
+          <span id="bulkBadgeDishCountLabel" class="text-[11px] font-bold text-emerald-800">0 dishes in category</span>
+          <span class="text-[10px] text-stone-500">Dishes will be updated together</span>
+        </div>
+      </div>
+
+      <!-- Step 2: Choose Badges / Dish Options to Edit -->
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <label class="block font-bold text-[#0d2d24] text-xs uppercase tracking-wider">
+            2. Choose Dish Option Badges
+          </label>
+          <span class="text-[10px] text-stone-500">Select badges to modify</span>
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-[#faf9f5] border border-[#e6e2d6] space-y-3">
+          <!-- Standard Badges -->
+          <div>
+            <span class="text-[10px] font-bold text-stone-500 uppercase tracking-wider block mb-1.5">Standard Badges</span>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <label class="flex items-center gap-2 p-2.5 rounded-xl bg-white border border-[#e6e2d6] hover:border-[#dfb15b] cursor-pointer transition shadow-xs">
+                <input type="checkbox" id="bulkBadgeJain" class="bulk-badge-cb rounded text-[#0d2d24]" />
+                <span class="text-xs font-semibold text-amber-900">🟡 Jain Available</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl bg-white border border-[#e6e2d6] hover:border-[#dfb15b] cursor-pointer transition shadow-xs">
+                <input type="checkbox" id="bulkBadgeSpecial" class="bulk-badge-cb rounded text-[#0d2d24]" />
+                <span class="text-xs font-semibold text-[#0d2d24]">⭐ Chef's Special</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl bg-white border border-[#e6e2d6] hover:border-[#dfb15b] cursor-pointer transition shadow-xs">
+                <input type="checkbox" id="bulkBadgeBestseller" class="bulk-badge-cb rounded text-[#0d2d24]" />
+                <span class="text-xs font-semibold text-emerald-800">🔥 Popular</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Dynamic Custom Dish Options (Tags) -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[10px] font-bold text-stone-500 uppercase tracking-wider">Custom Dish Badges</span>
+              <span class="text-[10px] text-stone-400">From Custom Dish Options</span>
+            </div>
+            <div class="flex flex-wrap gap-2" id="bulkBadgeCustomOptionsContainer">
+              <!-- Dynamically populated from adminState.customDishOptions -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Choose Action (Apply vs Remove) -->
+      <div class="pt-2 border-t border-[#f0eee6]">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <!-- Apply / Add Button -->
+          <button
+            type="button"
+            onclick="executeBulkBadges('add')"
+            class="w-full py-2.5 px-3 rounded-xl bg-[#0d2d24] hover:bg-[#153f33] text-[#ffdaa9] font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-sm"
+          >
+            <i class="fa-solid fa-circle-plus"></i>
+            <span>Apply Selected Badges</span>
+          </button>
+
+          <!-- Remove Button -->
+          <button
+            type="button"
+            onclick="executeBulkBadges('remove')"
+            class="w-full py-2.5 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 font-bold text-xs flex items-center justify-center gap-1.5 transition"
+          >
+            <i class="fa-solid fa-trash-can"></i>
+            <span>Remove Selected Badges</span>
+          </button>
+        </div>
+        <p class="text-[10px] text-stone-500 text-center mt-2">
+          "Apply" enables the selected badges on all dishes in category. "Remove" clears them.
+        </p>
+      </div>
+
     </div>
   </div>
 

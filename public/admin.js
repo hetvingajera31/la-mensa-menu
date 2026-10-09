@@ -368,7 +368,13 @@ async function pushStateToFirebase() {
   fetch('/api/settings', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(adminState.settings)
+    body: JSON.stringify({
+      settings: adminState.settings,
+      quickFilters: adminState.quickFilters,
+      customDishOptions: adminState.customDishOptions,
+      categories: adminState.categories,
+      items: adminState.items
+    })
   }).catch(() => {});
 
   return pushed;
@@ -513,6 +519,11 @@ function renderDishesTable() {
             ${item.isSpicy || item.spiceLevel >= 2 ? `
               <span class="text-[10px] font-bold text-rose-600">🌶️ Spicy</span>
             ` : ''}
+            ${(item.customOptions && Array.isArray(item.customOptions)) ? item.customOptions.map(opt => `
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-800 border border-purple-200">
+                🏷️ ${opt}
+              </span>
+            `).join('') : ''}
           </div>
         </td>
 
@@ -630,6 +641,169 @@ function openEditDishModal(itemId) {
 
 function closeDishModal() {
   document.getElementById('dishModal').classList.add('hidden');
+}
+
+// ================= CATEGORY BULK BADGES & OPTIONS EDITOR =================
+function openBulkBadgesModal(presetCategoryId) {
+  const modal = document.getElementById('bulkBadgesModal');
+  const catSel = document.getElementById('bulkBadgeCategorySelect');
+  if (!modal || !catSel) return;
+
+  // 1. Populate category options
+  let catOptions = `<option value="">-- Choose Category --</option>`;
+  catOptions += `<option value="ALL">★ All Categories (${adminState.items.length} dishes)</option>`;
+  adminState.categories.forEach(c => {
+    const count = adminState.items.filter(i => i.categoryId === c.id).length;
+    catOptions += `<option value="${c.id}">${c.name} (${count} dishes)</option>`;
+  });
+  catSel.innerHTML = catOptions;
+
+  if (presetCategoryId && (presetCategoryId === 'ALL' || adminState.categories.some(c => c.id === presetCategoryId))) {
+    catSel.value = presetCategoryId;
+  } else if (adminState.categoryFilter && adminState.categoryFilter !== 'all') {
+    catSel.value = adminState.categoryFilter;
+  } else if (adminState.categories.length) {
+    catSel.value = adminState.categories[0].id;
+  }
+
+  updateBulkBadgeDishCount();
+
+  // 2. Reset checkboxes
+  const jainCb = document.getElementById('bulkBadgeJain');
+  const specCb = document.getElementById('bulkBadgeSpecial');
+  const bestCb = document.getElementById('bulkBadgeBestseller');
+  if (jainCb) jainCb.checked = false;
+  if (specCb) specCb.checked = false;
+  if (bestCb) bestCb.checked = false;
+
+  // 3. Render custom options checkboxes
+  const customContainer = document.getElementById('bulkBadgeCustomOptionsContainer');
+  if (customContainer) {
+    if (!adminState.customDishOptions || adminState.customDishOptions.length === 0) {
+      customContainer.innerHTML = '<span class="text-[11px] text-stone-400 italic">No custom badges created yet. You can add them in Restaurant Profile tab.</span>';
+    } else {
+      customContainer.innerHTML = adminState.customDishOptions.map(tag => `
+        <label class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-[#dcd7c9] hover:border-[#dfb15b] cursor-pointer transition shadow-xs text-xs font-semibold text-[#0d2d24]">
+          <input type="checkbox" data-custom-opt="${tag}" class="bulk-badge-custom-cb rounded text-[#0d2d24]" />
+          <span>${tag}</span>
+        </label>
+      `).join('');
+    }
+  }
+
+  modal.classList.remove('hidden');
+}
+
+function closeBulkBadgesModal() {
+  const modal = document.getElementById('bulkBadgesModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function updateBulkBadgeDishCount() {
+  const catSel = document.getElementById('bulkBadgeCategorySelect');
+  const label = document.getElementById('bulkBadgeDishCountLabel');
+  if (!catSel || !label) return;
+
+  const val = catSel.value;
+  if (!val) {
+    label.textContent = 'Please choose a category';
+    label.className = 'text-[11px] font-bold text-stone-500';
+    return;
+  }
+
+  let count = 0;
+  let name = '';
+  if (val === 'ALL') {
+    count = adminState.items.length;
+    name = 'All Categories';
+  } else {
+    const cat = adminState.categories.find(c => c.id === val);
+    name = cat ? cat.name : val;
+    count = adminState.items.filter(i => i.categoryId === val).length;
+  }
+
+  label.textContent = `${count} dishes in "${name}"`;
+  label.className = 'text-[11px] font-bold text-emerald-800';
+}
+
+function executeBulkBadges(mode) {
+  const catSel = document.getElementById('bulkBadgeCategorySelect');
+  const targetCatId = catSel ? catSel.value : '';
+  if (!targetCatId) {
+    showAdminToast('Please select a category first', 'warning');
+    return;
+  }
+
+  const isJainSelected = Boolean(document.getElementById('bulkBadgeJain')?.checked);
+  const isSpecialSelected = Boolean(document.getElementById('bulkBadgeSpecial')?.checked);
+  const isBestsellerSelected = Boolean(document.getElementById('bulkBadgeBestseller')?.checked);
+
+  const selectedCustomTags = Array.from(
+    document.querySelectorAll('.bulk-badge-custom-cb:checked')
+  ).map(cb => cb.dataset.customOpt);
+
+  if (!isJainSelected && !isSpecialSelected && !isBestsellerSelected && selectedCustomTags.length === 0) {
+    showAdminToast('Please select at least one badge to apply or remove', 'warning');
+    return;
+  }
+
+  // Filter items in category
+  const targetItems = adminState.items.filter(i => targetCatId === 'ALL' || i.categoryId === targetCatId);
+  if (targetItems.length === 0) {
+    showAdminToast('No dishes found in the selected category', 'info');
+    return;
+  }
+
+  const catName = targetCatId === 'ALL'
+    ? 'All Categories'
+    : (adminState.categories.find(c => c.id === targetCatId)?.name || targetCatId);
+
+  let updatedCount = 0;
+  const badgeNames = [];
+  if (isJainSelected) badgeNames.push('Jain Available');
+  if (isSpecialSelected) badgeNames.push("Chef's Special");
+  if (isBestsellerSelected) badgeNames.push('Popular');
+  if (selectedCustomTags.length) badgeNames.push(...selectedCustomTags);
+
+  targetItems.forEach(item => {
+    let changed = false;
+
+    if (mode === 'add') {
+      if (isJainSelected && !item.isJain) { item.isJain = true; changed = true; }
+      if (isSpecialSelected && !item.isChefSpecial) { item.isChefSpecial = true; changed = true; }
+      if (isBestsellerSelected && !item.isBestseller) { item.isBestseller = true; changed = true; }
+      if (selectedCustomTags.length) {
+        if (!Array.isArray(item.customOptions)) item.customOptions = [];
+        selectedCustomTags.forEach(tag => {
+          if (!item.customOptions.includes(tag)) {
+            item.customOptions.push(tag);
+            changed = true;
+          }
+        });
+      }
+    } else if (mode === 'remove') {
+      if (isJainSelected && item.isJain) { item.isJain = false; changed = true; }
+      if (isSpecialSelected && item.isChefSpecial) { item.isChefSpecial = false; changed = true; }
+      if (isBestsellerSelected && item.isBestseller) { item.isBestseller = false; changed = true; }
+      if (selectedCustomTags.length && Array.isArray(item.customOptions)) {
+        const prevLen = item.customOptions.length;
+        item.customOptions = item.customOptions.filter(t => !selectedCustomTags.includes(t));
+        if (item.customOptions.length !== prevLen) changed = true;
+      }
+    }
+
+    if (changed) updatedCount++;
+  });
+
+  closeBulkBadgesModal();
+  updateMetrics();
+  renderDishesTable();
+  renderCategoriesGrid();
+
+  const actionText = mode === 'add' ? 'Applied' : 'Removed';
+  const desc = `${actionText} badges [${badgeNames.join(', ')}] across ${updatedCount} dishes in "${catName}"`;
+  markDraftChanged(desc);
+  showAdminToast(`${actionText} badges on ${updatedCount} dishes in "${catName}"!`, 'success');
 }
 
 async function saveDish(e) {
@@ -792,6 +966,9 @@ function renderCategoriesGrid() {
               <span>${isCatShown ? 'Shown' : 'Unshown'}</span>
             </button>
 
+            <button onclick="openBulkBadgesModal('${cat.id}')" title="Bulk edit dish badges for ${cat.name}" class="w-8 h-8 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 flex items-center justify-center transition shadow-xs">
+              <i class="fa-solid fa-tags text-xs"></i>
+            </button>
             <button onclick="openBulkCategoryImageModal('${cat.id}')" title="Set same image on all dishes in this category" class="w-8 h-8 rounded-xl bg-[#f7f5ef] hover:bg-[#ffdaa9] text-stone-700 hover:text-[#0d2d24] flex items-center justify-center transition border border-[#e6e2d6]">
               <i class="fa-solid fa-images text-xs"></i>
             </button>
@@ -1127,7 +1304,22 @@ async function saveCategory(e) {
 
   if (id) {
     const cat = adminState.categories.find(c => c.id === id);
-    if (cat) Object.assign(cat, payload);
+    if (cat) {
+      const oldName = cat.name;
+      Object.assign(cat, payload);
+
+      // Keep search bar quick filters in sync
+      if (Array.isArray(adminState.quickFilters)) {
+        adminState.quickFilters.forEach(qf => {
+          if (qf.categoryId === id || qf.id === id || (qf.name && qf.name.toLowerCase() === oldName.toLowerCase())) {
+            qf.name = payload.name;
+            qf.desc = `Shows all ${payload.name} dishes.`;
+            qf.categoryId = id;
+          }
+        });
+        renderQuickFiltersList();
+      }
+    }
   } else {
     adminState.categories.push({
       id: 'cat-' + Date.now(),
@@ -1152,6 +1344,15 @@ async function deleteCategory(catId, name, itemCount) {
   if (!confirm(`Delete category "${name}"?`)) return;
 
   adminState.categories = adminState.categories.filter(c => c.id !== catId);
+
+  // Remove linked search bar quick filter if any
+  if (Array.isArray(adminState.quickFilters)) {
+    adminState.quickFilters = adminState.quickFilters.filter(qf =>
+      qf.categoryId !== catId && qf.id !== catId && (qf.name && qf.name.toLowerCase() !== name.toLowerCase())
+    );
+    renderQuickFiltersList();
+  }
+
   updateMetrics();
   renderCategoriesGrid();
   populateCategoryDropdowns();
@@ -1177,6 +1378,7 @@ function populateProfileForm() {
   if (document.getElementById('profAnnouncement')) document.getElementById('profAnnouncement').value = s.announcement || '✨ Welcome to La Mensa! Freshly prepared artisanal multi-cuisine delicacies. No artificial food colors or MSG.';
 
   renderQuickFiltersList();
+  populateQuickFilterCategories();
   renderCustomTags();
 }
 
@@ -1187,23 +1389,26 @@ function renderQuickFiltersList() {
   document.getElementById('quickFilterCountBadge').textContent = `${adminState.quickFilters.length} visible`;
 
   container.innerHTML = adminState.quickFilters.map((f, idx) => `
-    <div class="bg-white p-3 rounded-xl border border-[#e6e2d6] flex items-center justify-between gap-3 text-xs">
+    <div class="bg-white p-3 rounded-xl border border-[#e6e2d6] flex items-center justify-between gap-3 text-xs shadow-xs">
       <div>
-        <span class="font-bold text-[#0d2d24]">${f.name}</span>
-        <p class="text-[11px] text-stone-500">${f.desc}</p>
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <span class="font-bold text-[#0d2d24] text-xs">${f.name}</span>
+          ${f.categoryId ? '<span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-50 text-amber-800 border border-amber-200">Category</span>' : ''}
+        </div>
+        <p class="text-[11px] text-stone-500">${f.desc || ''}</p>
       </div>
 
       <div class="flex items-center gap-1.5 shrink-0">
-        <button type="button" onclick="moveQuickFilter(${idx}, -1)" title="Move up" class="p-1 rounded text-stone-400 hover:text-stone-700">
+        <button type="button" onclick="moveQuickFilter(${idx}, -1)" title="Move up" class="p-1 rounded text-stone-400 hover:text-stone-700 cursor-pointer">
           <i class="fa-solid fa-angle-left"></i>
         </button>
-        <button type="button" onclick="moveQuickFilter(${idx}, 1)" title="Move down" class="p-1 rounded text-stone-400 hover:text-stone-700">
+        <button type="button" onclick="moveQuickFilter(${idx}, 1)" title="Move down" class="p-1 rounded text-stone-400 hover:text-stone-700 cursor-pointer">
           <i class="fa-solid fa-angle-right"></i>
         </button>
         ${f.alwaysShown ? `
           <span class="text-[10px] font-bold text-emerald-700 px-2 py-0.5 rounded bg-emerald-50">Always shown</span>
         ` : `
-          <button type="button" onclick="removeQuickFilter(${idx})" class="text-[11px] font-bold text-rose-600 hover:text-rose-700 px-2 py-0.5 rounded bg-rose-50 border border-rose-200">
+          <button type="button" onclick="removeQuickFilter(${idx})" class="text-[11px] font-bold text-rose-600 hover:text-rose-700 px-2 py-0.5 rounded bg-rose-50 border border-rose-200 cursor-pointer">
             Remove
           </button>
         `}
@@ -1219,28 +1424,93 @@ function moveQuickFilter(idx, delta) {
   adminState.quickFilters[idx] = adminState.quickFilters[target];
   adminState.quickFilters[target] = temp;
   renderQuickFiltersList();
+  markDraftChanged(`Search quick filter "${temp.name}" position updated`);
 }
 
 function removeQuickFilter(idx) {
+  const removed = adminState.quickFilters[idx];
   adminState.quickFilters.splice(idx, 1);
   renderQuickFiltersList();
+  populateQuickFilterCategories();
+  markDraftChanged(`Search quick filter "${removed ? removed.name : ''}" removed`);
+}
+
+function onQuickFilterCategorySelectChange() {
+  const sel = document.getElementById('addQuickFilterCategorySelect');
+  const input = document.getElementById('addQuickFilterTextInput');
+  if (!sel || !input) return;
+  if (sel.value) {
+    const cat = adminState.categories.find(c => c.id === sel.value);
+    if (cat) {
+      input.value = cat.name;
+    }
+  }
+}
+
+function populateQuickFilterCategories() {
+  const sel = document.getElementById('addQuickFilterCategorySelect');
+  if (!sel) return;
+  const existingNames = new Set((adminState.quickFilters || []).map(f => f.name.toLowerCase()));
+  let html = '<option value="">-- Or Pick From Category --</option>';
+  adminState.categories.forEach(c => {
+    const isAdded = existingNames.has(c.name.toLowerCase());
+    html += `<option value="${c.id}" ${isAdded ? 'disabled' : ''}>${c.name}${isAdded ? ' (Already Added)' : ''}</option>`;
+  });
+  sel.innerHTML = html;
 }
 
 function addQuickFilter() {
-  const sel = document.getElementById('addQuickFilterSelect');
-  const val = sel.value;
-  if (!val) return;
-  if (adminState.quickFilters.some(f => f.name === val)) {
-    showAdminToast('Filter already in list', 'info');
+  const input = document.getElementById('addQuickFilterTextInput');
+  const sel = document.getElementById('addQuickFilterCategorySelect');
+  let name = input ? input.value.trim() : '';
+  let categoryId = null;
+
+  if (!name && sel && sel.value) {
+    const cat = adminState.categories.find(c => c.id === sel.value);
+    if (cat) {
+      name = cat.name;
+      categoryId = cat.id;
+    }
+  } else if (name && sel && sel.value) {
+    const cat = adminState.categories.find(c => c.id === sel.value);
+    if (cat && cat.name.toLowerCase() === name.toLowerCase()) {
+      categoryId = cat.id;
+    }
+  }
+
+  if (!name) {
+    showAdminToast('Please type a filter name or choose a category', 'warning');
     return;
   }
-  adminState.quickFilters.push({
-    id: val.toLowerCase().replace(/[^a-z0-9]/g, ''),
-    name: val,
-    desc: `Shows ${val} dishes.`
-  });
+
+  // Check if name matches any category in adminState.categories
+  if (!categoryId) {
+    const matchedCat = adminState.categories.find(c => c.name.toLowerCase() === name.toLowerCase());
+    if (matchedCat) categoryId = matchedCat.id;
+  }
+
+  // Duplicate check
+  if (adminState.quickFilters.some(f => f.name.toLowerCase() === name.toLowerCase())) {
+    showAdminToast(`Filter "${name}" is already in search bar`, 'info');
+    return;
+  }
+
+  const newFilter = {
+    id: categoryId || ('qf-' + Date.now()),
+    name: name,
+    desc: categoryId ? `Shows dishes in ${name}` : `Filter by ${name}`,
+    categoryId: categoryId,
+    alwaysShown: false
+  };
+
+  adminState.quickFilters.push(newFilter);
+  if (input) input.value = '';
+  if (sel) sel.value = '';
+
   renderQuickFiltersList();
-  sel.value = '';
+  populateQuickFilterCategories();
+  markDraftChanged(`Search quick filter "${name}" added`);
+  showAdminToast(`Filter "${name}" added to search bar!`, 'success');
 }
 
 function renderCustomTags() {
@@ -1569,6 +1839,7 @@ function populateCategoryDropdowns() {
   }
 
   updateBulkStockBarUI();
+  populateQuickFilterCategories();
 }
 
 function setupEventListeners() {

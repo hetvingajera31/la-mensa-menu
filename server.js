@@ -46,7 +46,10 @@ app.get('/api/menu', (req, res) => {
     success: true,
     settings: db.settings,
     categories: db.categories,
-    items: db.items
+    items: db.items,
+    quickFilters: db.quickFilters || [],
+    customDishOptions: db.customDishOptions || [],
+    frontPageCards: db.frontPageCards || []
   });
 });
 
@@ -237,10 +240,16 @@ app.delete('/api/categories/:id', (req, res) => {
 // --- SETTINGS ---
 app.post('/api/settings', (req, res) => {
   const db = readDb();
-  db.settings = {
-    ...db.settings,
-    ...req.body
-  };
+  if (req.body.settings) {
+    db.settings = { ...db.settings, ...req.body.settings };
+  } else {
+    db.settings = { ...db.settings, ...req.body };
+  }
+  if (req.body.quickFilters) db.quickFilters = req.body.quickFilters;
+  if (req.body.customDishOptions) db.customDishOptions = req.body.customDishOptions;
+  if (req.body.frontPageCards) db.frontPageCards = req.body.frontPageCards;
+  if (req.body.categories) db.categories = req.body.categories;
+  if (req.body.items) db.items = req.body.items;
   writeDb(db);
   res.json({ success: true, message: 'Settings saved successfully', settings: db.settings });
 });

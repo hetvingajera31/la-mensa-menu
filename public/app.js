@@ -19,8 +19,11 @@ const state = {
   settings: {},
   categories: [],
   items: [],
+  quickFilters: [],
+  customDishOptions: [],
   activeCategory: 'all',
-  activeDietFilter: 'all', // 'all', 'jain', 'bestseller', 'spicy'
+  activeQuickFilter: 'all',
+  activeDietFilter: 'all', // legacy support
   searchQuery: ''
 };
 
@@ -55,8 +58,11 @@ function initMenuSource() {
             state.settings = data.settings || {};
             state.categories = data.categories || [];
             state.items = data.items || [];
+            if (data.quickFilters) state.quickFilters = data.quickFilters;
+            if (data.customDishOptions) state.customDishOptions = data.customDishOptions;
 
             applySettingsToUI();
+            renderQuickFilterChips();
             renderCategoryNav();
             renderMenu();
 
@@ -84,8 +90,11 @@ function initMenuSource() {
             state.settings = data.settings || {};
             state.categories = data.categories || [];
             state.items = data.items || [];
+            if (data.quickFilters) state.quickFilters = data.quickFilters;
+            if (data.customDishOptions) state.customDishOptions = data.customDishOptions;
 
             applySettingsToUI();
+            renderQuickFilterChips();
             renderCategoryNav();
             renderMenu();
 
@@ -131,7 +140,9 @@ async function fetchMenuData(isBackgroundSync = false) {
             success: true,
             settings: cloudData.settings || {},
             categories: cloudData.categories || [],
-            items: cloudData.items || []
+            items: cloudData.items || [],
+            quickFilters: cloudData.quickFilters || [],
+            customDishOptions: cloudData.customDishOptions || []
           };
         }
       } catch (fbErr) {
@@ -149,8 +160,11 @@ async function fetchMenuData(isBackgroundSync = false) {
       state.settings = data.settings || {};
       state.categories = data.categories || [];
       state.items = data.items || [];
+      if (data.quickFilters) state.quickFilters = data.quickFilters;
+      if (data.customDishOptions) state.customDishOptions = data.customDishOptions;
 
       applySettingsToUI();
+      renderQuickFilterChips();
       renderCategoryNav();
       renderMenu();
 
@@ -383,23 +397,72 @@ function filterByCategory(categoryId) {
   }
 }
 
-// Dietary Quick Filters (Exact Match to Image 2 chips)
-function setDietFilter(filterType) {
-  state.activeDietFilter = filterType;
+// Search Bar Quick Filters (Dynamic from Admin / Cloud)
+function getDefaultQuickFilters() {
+  return [
+    { id: 'all', name: 'All Dishes', desc: 'Shows all menu items', alwaysShown: true },
+    { id: 'veg', name: '100% Veg', desc: 'Shows vegetarian items' },
+    { id: 'jain', name: '🟡 Jain Available', desc: 'Shows Jain items' },
+    { id: 'special', name: "Chef's Specials", desc: 'Signature items' },
+    { id: 'bestseller', name: 'Bestsellers', desc: 'Most popular dishes' },
+    { id: 'beverages', name: 'Mocktails & Beverages', desc: 'Cold & hot refreshments' },
+    { id: 'desserts', name: 'Desserts', desc: 'Desserts & sweets' }
+  ];
+}
+
+function renderQuickFilterChips() {
+  const container = document.getElementById('quickFilterChipsContainer');
+  if (!container) return;
+
+  if (!state.quickFilters || !state.quickFilters.length) {
+    state.quickFilters = getDefaultQuickFilters();
+  }
+
+  if (!state.activeQuickFilter) {
+    state.activeQuickFilter = 'all';
+  }
+
+  container.innerHTML = state.quickFilters.map(f => {
+    const isActive = state.activeQuickFilter === f.id;
+    return `
+      <button
+        type="button"
+        onclick="setQuickFilter('${f.id}')"
+        id="qf-btn-${f.id}"
+        class="quick-filter-btn diet-btn px-3 sm:px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold transition cursor-pointer ${
+          isActive
+            ? 'active bg-[#ffdaa9] text-[#0d2d24] font-bold border border-[#dfb15b] shadow-sm'
+            : 'bg-[#09221b] text-[#e8d8b9] border border-[#dfb15b]/30 hover:border-[#dfb15b]'
+        }"
+      >
+        ${f.name}
+      </button>
+    `;
+  }).join('');
+}
+
+function setQuickFilter(filterId) {
+  state.activeQuickFilter = filterId;
+  state.activeDietFilter = filterId;
 
   // Update button visual states
-  document.querySelectorAll('.diet-btn').forEach(btn => {
-    btn.classList.remove('bg-[#ffdaa9]', 'text-[#0d2d24]', 'font-bold', 'border-[#dfb15b]', 'shadow-sm');
+  document.querySelectorAll('.quick-filter-btn, .diet-btn').forEach(btn => {
+    btn.classList.remove('active', 'bg-[#ffdaa9]', 'text-[#0d2d24]', 'font-bold', 'border-[#dfb15b]', 'shadow-sm');
     btn.classList.add('bg-[#09221b]', 'text-[#e8d8b9]', 'border-[#dfb15b]/30');
   });
 
-  const activeBtn = document.getElementById(`filter-${filterType}`);
+  const activeBtn = document.getElementById(`qf-btn-${filterId}`) || document.getElementById(`filter-${filterId}`);
   if (activeBtn) {
     activeBtn.classList.remove('bg-[#09221b]', 'text-[#e8d8b9]', 'border-[#dfb15b]/30');
-    activeBtn.classList.add('bg-[#ffdaa9]', 'text-[#0d2d24]', 'font-bold', 'border-[#dfb15b]', 'shadow-sm');
+    activeBtn.classList.add('active', 'bg-[#ffdaa9]', 'text-[#0d2d24]', 'font-bold', 'border-[#dfb15b]', 'shadow-sm');
   }
 
   renderMenu();
+}
+
+// Backwards compatibility alias
+function setDietFilter(filterType) {
+  setQuickFilter(filterType);
 }
 
 // Main Menu Renderer (Grouped by Category)
@@ -437,25 +500,49 @@ function renderMenu() {
       if (!matchName && !matchDesc && !matchCat) return false;
     }
 
-    // Diet filter match
-    if (state.activeDietFilter === 'veg') {
-      if (item.isVeg === false) return false;
-    } else if (state.activeDietFilter === 'jain') {
-      if (!item.isJain) return false;
-    } else if (state.activeDietFilter === 'special') {
-      if (!item.isChefSpecial) return false;
-    } else if (state.activeDietFilter === 'bestseller') {
-      if (!item.isBestseller && !item.isChefSpecial) return false;
-    } else if (state.activeDietFilter === 'beverages') {
-      const catObj = state.categories.find(c => c.id === item.categoryId);
-      const catName = (catObj ? catObj.name : (item.categoryName || '')).toLowerCase();
-      const isBev = catName.includes('beverage') || catName.includes('mocktail') || catName.includes('mojito') || catName.includes('shake') || catName.includes('drink') || catName.includes('coffee') || catName.includes('tea');
-      if (!isBev) return false;
-    } else if (state.activeDietFilter === 'desserts') {
-      const catObj = state.categories.find(c => c.id === item.categoryId);
-      const catName = (catObj ? catObj.name : (item.categoryName || '')).toLowerCase();
-      const isDessert = catName.includes('dessert') || catName.includes('sweet') || catName.includes('ice cream') || catName.includes('cake');
-      if (!isDessert) return false;
+    // Dynamic Quick Filter matching
+    const activeQfId = state.activeQuickFilter || state.activeDietFilter;
+    if (activeQfId && activeQfId !== 'all') {
+      const qf = (state.quickFilters || []).find(f => f.id === activeQfId);
+      const qfName = (qf ? qf.name : activeQfId).toLowerCase().trim();
+      const qfId = (qf ? qf.id : activeQfId).toLowerCase().trim();
+
+      // Standard dietary flags
+      if (qfId === 'veg' || (qfName.includes('veg') && !qfName.includes('non'))) {
+        if (item.isVeg === false) return false;
+      } else if (qfId === 'jain' || qfName.includes('jain')) {
+        if (!item.isJain) return false;
+      } else if (qfId === 'special' || qfName.includes('special') || qfName.includes('chef')) {
+        if (!item.isChefSpecial) return false;
+      } else if (qfId === 'bestseller' || qfName.includes('bestseller') || qfName.includes('popular')) {
+        if (!item.isBestseller && !item.isChefSpecial) return false;
+      } else if (qf && qf.categoryId && item.categoryId === qf.categoryId) {
+        // Matched explicitly assigned categoryId
+      } else {
+        // Match by Category Name or ID
+        const matchedCat = state.categories.find(c =>
+          c.id.toLowerCase() === qfId ||
+          c.name.toLowerCase() === qfName
+        );
+
+        if (matchedCat) {
+          if (item.categoryId !== matchedCat.id) return false;
+        } else {
+          // Match by Custom Badges / Options
+          const hasCustomOpt = Array.isArray(item.customOptions) && item.customOptions.some(opt => opt.toLowerCase() === qfName);
+          const hasTag = Array.isArray(item.tags) && item.tags.some(t => t.toLowerCase() === qfName);
+
+          // Keyword match in dish name, category name, or description
+          const cleanWord = qfName.replace(/[^a-z0-9\s]/g, '').trim();
+          const inName = item.name.toLowerCase().includes(cleanWord);
+          const inCat = (item.categoryName || '').toLowerCase().includes(cleanWord);
+          const inDesc = (item.description || '').toLowerCase().includes(cleanWord);
+
+          if (!hasCustomOpt && !hasTag && !inName && !inCat && !inDesc) {
+            return false;
+          }
+        }
+      }
     }
 
     return true;

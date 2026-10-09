@@ -5456,5 +5456,41 @@
       "total": 1373.4,
       "notes": "Please prepare in 100% Jain option (no onion / garlic / potato)"
     }
+  ],
+  "quickFilters": [
+    {
+      "id": "all",
+      "name": "All Dishes",
+      "desc": "Shows all menu items",
+      "alwaysShown": true
+    },
+    {
+      "id": "veg",
+      "name": "100% Veg",
+      "desc": "Shows vegetarian dishes"
+    },
+    {
+      "id": "jain",
+      "name": "🟡 Jain Available",
+      "desc": "Shows dishes that can be prepared Jain style"
+    },
+    {
+      "id": "special",
+      "name": "Chef Specials",
+      "desc": "Shows chef-recommended dishes"
+    },
+    {
+      "id": "bestseller",
+      "name": "Bestsellers",
+      "desc": "Shows the most popular dishes"
+    },
+    {
+      "id": "beverages",
+      "name": "Mocktails and Beverages",
+      "desc": "Cold and hot refreshments"
+    }
+  ],
+  "customDishOptions": [
+    "Tangy"
   ]
 }
