@@ -744,6 +744,30 @@
             </div>
           </div>
 
+          <!-- Feature Setting: Chef's Recommended Pairing (Toggle ON/OFF) -->
+          <div class="p-5 rounded-2xl bg-amber-50/60 border border-amber-200/90 flex items-center justify-between gap-4 flex-wrap">
+            <div class="flex items-start gap-3">
+              <div class="w-10 h-10 rounded-2xl bg-white border border-amber-300 text-amber-800 flex items-center justify-center text-lg shrink-0 shadow-xs">
+                <i class="fa-solid fa-utensils"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h4 class="text-xs font-bold text-[#0d2d24] uppercase tracking-wider">Chef's Recommended Pairing (Food Pairing)</h4>
+                  <span id="smartPairingStatusBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">Enabled</span>
+                </div>
+                <p class="text-[11px] text-stone-600 mt-1">
+                  When enabled, customer dish popups show matching mocktails, drinks, sides, or desserts to enhance dining experience.
+                </p>
+              </div>
+            </div>
+
+            <!-- Toggle Switch -->
+            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+              <input type="checkbox" id="toggleSmartPairingInput" onchange="onToggleSmartPairingChange(this.checked)" class="sr-only peer" checked />
+              <div class="w-12 h-6 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0d2d24]"></div>
+            </label>
+          </div>
+
           <!-- Announcement Banner -->
           <div>
             <label class="block text-[11px] font-bold tracking-wider text-stone-600 uppercase mb-1.5">
@@ -1006,6 +1030,19 @@
           <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 pt-1" id="dishModalOptionsContainer">
             <!-- Injected via renderDishModalOptions() -->
           </div>
+        </div>
+
+        <!-- Chef's Custom Pairing (Optional Override) -->
+        <div class="p-3.5 rounded-2xl bg-amber-50/60 border border-amber-200/80 space-y-1.5">
+          <div class="flex items-center justify-between flex-wrap gap-1">
+            <label class="block font-bold text-[#0d2d24] text-[11px] uppercase tracking-wider">
+              ✨ Recommended Food Pairing (Optional)
+            </label>
+            <span class="text-[10px] text-stone-500">Auto Smart Pairing used if empty</span>
+          </div>
+          <select id="dishFormPairingDish" class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#dcd7c9] outline-none text-xs text-[#0d2d24] font-medium cursor-pointer">
+            <option value="">-- Auto Smart Pairing (Recommended) --</option>
+          </select>
         </div>
 
         <!-- Modal Actions -->
@@ -1428,6 +1465,6 @@
   <script src="firebase-config.js?v=2.3"></script>
 
   <!-- Admin Controller Script -->
-  <script src="admin.js?v=2.6"></script>
+  <script src="admin.js?v=2.7"></script>
 </body>
 </html>

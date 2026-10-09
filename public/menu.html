@@ -267,15 +267,15 @@
 
   <!-- ================= 6. DISH DETAIL MODAL ================= -->
   <div id="dishModal" class="fixed inset-0 z-50 bg-[#09221b]/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-[#e6e2d6] transform transition-all scale-95 opacity-0 duration-200" id="dishModalCard">
-      <div class="relative  w-full overflow-hidden bg-[#f7f5ef]">
+    <div class="bg-white rounded-3xl max-w-lg w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-[#e6e2d6] transform transition-all scale-95 opacity-0 duration-200" id="dishModalCard">
+      <div class="relative w-full overflow-hidden bg-[#f7f5ef]">
         <img id="modalDishImg" src="" alt="Dish Image" class="w-full h-full object-cover">
-        <button onclick="closeDishModal()" class="absolute top-3 right-3 w-9 h-9 rounded-full bg-[#09221b]/80 text-white hover:bg-[#09221b] flex items-center justify-center transition shadow-md">
+        <button onclick="closeDishModal()" class="absolute top-3 right-3 w-9 h-9 rounded-full bg-[#09221b]/80 text-white hover:bg-[#09221b] flex items-center justify-center transition shadow-md cursor-pointer">
           <i class="fa-solid fa-xmark"></i>
         </button>
         <div id="modalBadges" class="absolute top-3 left-3 flex flex-wrap gap-1.5"></div>
       </div>
-      <div class="p-6">
+      <div class="p-5 sm:p-6">
         <div class="flex items-start justify-between gap-4 mb-2">
           <div>
             <h3 id="modalDishName" class="text-xl font-bold font-serif text-[#0d2d24]">Dish Name</h3>
@@ -289,9 +289,26 @@
           </div>
         </div>
 
-        <p id="modalDescription" class="text-xs sm:text-sm text-[#44524c] leading-relaxed my-4">
+        <p id="modalDescription" class="text-xs sm:text-sm text-[#44524c] leading-relaxed my-3">
           Dish detailed description...
         </p>
+
+        <!-- Chef's Recommended Pairing Section -->
+        <div id="modalPairingSection" class="hidden my-4 p-3.5 sm:p-4 rounded-2xl bg-amber-50/70 border border-amber-200/90 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-lg bg-amber-200/80 text-amber-900 flex items-center justify-center text-xs font-bold shadow-2xs">✨</span>
+              <h4 class="font-serif font-bold text-xs text-[#0d2d24] uppercase tracking-wider">Chef's Recommended Pairing</h4>
+            </div>
+            <span class="text-[10px] font-bold text-amber-900 bg-white/90 px-2.5 py-0.5 rounded-full border border-amber-200 shadow-2xs">Best Together</span>
+          </div>
+          <p class="text-[11px] text-stone-600">
+            Handcrafted flavors that complement and elevate this dish:
+          </p>
+          <div id="modalPairingList" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <!-- Dynamically populated pairing cards -->
+          </div>
+        </div>
 
         <div id="modalTagsContainer" class="flex flex-wrap gap-1.5 mb-5"></div>
 
@@ -300,7 +317,7 @@
             <span class="w-2 h-2 rounded-full bg-emerald-600 inline-block"></span>
             <span>100% Pure Vegetarian</span>
           </div>
-          <button onclick="closeDishModal()" class="px-5 py-2.5 bg-[#dfb15b] hover:bg-[#c89b3c] text-[#0d2d24] font-bold text-xs rounded-xl transition shadow">
+          <button onclick="closeDishModal()" class="px-5 py-2.5 bg-[#dfb15b] hover:bg-[#c89b3c] text-[#0d2d24] font-bold text-xs rounded-xl transition shadow cursor-pointer">
             Close
           </button>
         </div>
@@ -342,6 +359,6 @@
   <script src="firebase-config.js?v=2.2"></script>
 
   <!-- Menu App Script -->
-  <script src="app.js?v=2.3"></script>
+  <script src="app.js?v=2.4"></script>
 </body>
 </html>

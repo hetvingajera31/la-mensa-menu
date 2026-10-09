@@ -841,12 +841,38 @@ function renderDishModalOptions(item) {
   container.innerHTML = html;
 }
 
+function populateDishPairingDropdown(currentDishId, selectedPairId) {
+  const sel = document.getElementById('dishFormPairingDish');
+  if (!sel) return;
+  let html = '<option value="">-- Auto Smart Pairing (Recommended) --</option>';
+
+  const candidates = adminState.items
+    .filter(i => i.id !== currentDishId)
+    .sort((a, b) => {
+      const catA = (adminState.categories.find(c => c.id === a.categoryId)?.name || '').localeCompare(
+        adminState.categories.find(c => c.id === b.categoryId)?.name || ''
+      );
+      if (catA !== 0) return catA;
+      return a.name.localeCompare(b.name);
+    });
+
+  candidates.forEach(dish => {
+    const catName = adminState.categories.find(c => c.id === dish.categoryId)?.name || 'Dish';
+    const isSelected = selectedPairId && dish.id === selectedPairId;
+    html += `<option value="${dish.id}" ${isSelected ? 'selected' : ''}>[${catName}] ${dish.name} (₹${dish.price})</option>`;
+  });
+
+  sel.innerHTML = html;
+  sel.value = selectedPairId || '';
+}
+
 // Open Add Dish Modal
 function openAddDishModal() {
   document.getElementById('dishModalTitle').textContent = 'Add New Dish';
   document.getElementById('dishFormId').value = '';
   document.getElementById('dishForm').reset();
   renderDishModalOptions(null);
+  populateDishPairingDropdown('', '');
   document.getElementById('dishImageUploadStatus').textContent = '';
   document.getElementById('dishModal').classList.remove('hidden');
 }
@@ -864,6 +890,7 @@ function openEditDishModal(itemId) {
   document.getElementById('dishFormImage').value = item.image || '';
   document.getElementById('dishFormDesc').value = item.description || '';
   renderDishModalOptions(item);
+  populateDishPairingDropdown(item.id, item.pairingDishId);
   document.getElementById('dishImageUploadStatus').textContent = '';
   
   document.getElementById('dishModal').classList.remove('hidden');
@@ -1115,6 +1142,7 @@ async function saveDish(e) {
   const isJainEl = document.getElementById('dishFormIsJain');
   const isSpecialEl = document.getElementById('dishFormIsSpecial');
   const isBestsellerEl = document.getElementById('dishFormIsBestseller');
+  const pairingDishSel = document.getElementById('dishFormPairingDish');
 
   const payload = {
     id: id || ('item-' + Date.now()),
@@ -1131,6 +1159,7 @@ async function saveDish(e) {
     isJain: isJainEl ? isJainEl.checked : false,
     isChefSpecial: isSpecialEl ? isSpecialEl.checked : false,
     isBestseller: isBestsellerEl ? isBestsellerEl.checked : false,
+    pairingDishId: pairingDishSel && pairingDishSel.value ? pairingDishSel.value : undefined,
     customOptions: selectedCustomOptions
   };
 
@@ -1681,6 +1710,32 @@ function populateProfileForm() {
   populateQuickFilterCategories();
   renderCustomTags();
   updateTwoFactorUIStatus();
+
+  // Smart Food Pairing toggle UI
+  const isPairingEnabled = adminState.settings.enableSmartPairings !== false;
+  const togglePairing = document.getElementById('toggleSmartPairingInput');
+  if (togglePairing) togglePairing.checked = isPairingEnabled;
+  updateSmartPairingBadgeUI(isPairingEnabled);
+}
+
+function onToggleSmartPairingChange(isChecked) {
+  adminState.settings = adminState.settings || {};
+  adminState.settings.enableSmartPairings = isChecked;
+  updateSmartPairingBadgeUI(isChecked);
+  markDraftChanged(`Food Pairing feature ${isChecked ? 'enabled' : 'disabled'}`);
+  showAdminToast(`Food Pairing ${isChecked ? 'enabled on menu' : 'hidden from menu'}`, 'info');
+}
+
+function updateSmartPairingBadgeUI(isEnabled) {
+  const badge = document.getElementById('smartPairingStatusBadge');
+  if (!badge) return;
+  if (isEnabled) {
+    badge.textContent = 'Enabled';
+    badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300';
+  } else {
+    badge.textContent = 'Disabled';
+    badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-stone-200 text-stone-700';
+  }
 }
 
 function renderQuickFiltersList() {
@@ -1863,6 +1918,11 @@ function saveProfileSettings(e) {
   adminState.settings.wifiName = document.getElementById('profWifiName').value.trim();
   adminState.settings.wifiPassword = document.getElementById('profWifiPass').value.trim();
   adminState.settings.announcement = document.getElementById('profAnnouncement').value.trim();
+
+  const togglePairing = document.getElementById('toggleSmartPairingInput');
+  if (togglePairing) {
+    adminState.settings.enableSmartPairings = togglePairing.checked;
+  }
 
   const newPass = document.getElementById('profPassword') ? document.getElementById('profPassword').value.trim() : '';
   if (newPass && newPass.length >= 6) {

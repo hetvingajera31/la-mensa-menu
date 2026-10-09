@@ -725,11 +725,202 @@ function openDishModal(itemId) {
   }
   document.getElementById('modalTagsContainer').innerHTML = tagsHtml;
 
+  // Chef's Recommended Food Pairings
+  renderDishModalPairings(item);
+
   modal.classList.remove('hidden');
   setTimeout(() => {
     card.classList.remove('scale-95', 'opacity-0');
     card.classList.add('scale-100', 'opacity-100');
   }, 10);
+}
+
+// ==================== CHEF'S RECOMMENDED FOOD PAIRINGS ====================
+
+function renderDishModalPairings(item) {
+  const section = document.getElementById('modalPairingSection');
+  const listEl = document.getElementById('modalPairingList');
+  if (!section || !listEl) return;
+
+  // Master switch check from admin settings (default is enabled unless explicitly false)
+  if (state.settings && state.settings.enableSmartPairings === false) {
+    section.classList.add('hidden');
+    listEl.innerHTML = '';
+    return;
+  }
+
+  const pairings = getSmartPairingsForDish(item);
+  if (!pairings || !pairings.length) {
+    section.classList.add('hidden');
+    listEl.innerHTML = '';
+    return;
+  }
+
+  const currency = state.settings.currencySymbol || '₹';
+  listEl.innerHTML = pairings.map(pair => `
+    <div onclick="openDishModal('${pair.id}')" class="p-2.5 rounded-xl bg-white border border-amber-200/90 hover:border-amber-400 hover:shadow-sm cursor-pointer transition flex items-center gap-2.5 group">
+      <img src="${resolveDishImage(pair)}" class="w-12 h-12 rounded-lg object-cover border border-[#e6e2d6] shrink-0" alt="${pair.name}" />
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center justify-between gap-1">
+          <span class="font-bold text-xs text-[#0d2d24] group-hover:text-amber-800 transition truncate">${pair.name}</span>
+          <span class="text-xs font-extrabold text-[#0d2d24] shrink-0">${currency}${pair.price}</span>
+        </div>
+        <p class="text-[10px] text-stone-500 truncate mt-0.5">${pair.pairingReason || 'Perfect flavor companion'}</p>
+      </div>
+    </div>
+  `).join('');
+
+  section.classList.remove('hidden');
+}
+
+function getSmartPairingsForDish(item) {
+  if (!item || !state.items || !state.items.length) return [];
+
+  // Master toggle check
+  if (state.settings && state.settings.enableSmartPairings === false) return [];
+
+  // 1. Check for manual custom pairing set by admin
+  if (item.pairingDishId) {
+    const manualPair = state.items.find(i => i.id === item.pairingDishId && i.isAvailable !== false);
+    if (manualPair) {
+      return [{
+        ...manualPair,
+        pairingReason: "Chef's Handpicked Combination"
+      }];
+    }
+  }
+
+  // 2. Auto Smart Pairing Engine
+  const allAvailable = state.items.filter(i => i.id !== item.id && i.isAvailable !== false);
+  const isJainItem = Boolean(item.isJain);
+
+  // Strictly respect Jain diet if current dish is Jain
+  const matchDiet = (candidates) => {
+    if (isJainItem) {
+      return candidates.filter(c => c.isJain);
+    }
+    return candidates;
+  };
+
+  // Helper to match items by category keywords
+  const findCategoryMatches = (keywords) => {
+    const lowerKeys = keywords.map(k => k.toLowerCase());
+    return allAvailable.filter(i => {
+      const catObj = (state.categories || []).find(c => c.id === i.categoryId);
+      const catName = (catObj ? catObj.name : (i.category || '')).toLowerCase();
+      const catId = (i.categoryId || '').toLowerCase();
+      return lowerKeys.some(k => catName.includes(k) || catId.includes(k));
+    });
+  };
+
+  const currentCatObj = (state.categories || []).find(c => c.id === item.categoryId);
+  const currentCatName = (currentCatObj ? currentCatObj.name : (item.category || '')).toLowerCase();
+  const currentCatId = (item.categoryId || '').toLowerCase();
+
+  const pairings = [];
+
+  // Categorized pools with exact category IDs + fallback keywords
+  const mocktails = matchDiet(findCategoryMatches(['cat-mocktails', 'mocktail', 'ice tea', 'iced tea', 'cooler', 'cat-soft-drinks']));
+  const shakes = matchDiet(findCategoryMatches(['cat-shakes', 'frappe', 'shake']));
+  const coffees = matchDiet(findCategoryMatches(['cat-coffee', 'coffee', 'artisan coffee', 'brews']));
+  const starters = matchDiet(findCategoryMatches(['cat-titbits', 'cat-tandoor', 'cat-soups', 'cat-salads', 'starter', 'titbit']));
+  const breads = matchDiet(findCategoryMatches(['cat-breads', 'tandoori bread', 'roti', 'naan']));
+  const desserts = matchDiet(findCategoryMatches(['cat-desserts', 'dessert', 'treat', 'sweet']).filter(i => i.price >= 80));
+
+  // Fallbacks
+  const popularBeverages = matchDiet([...mocktails, ...shakes, ...coffees]);
+  const popularSides = matchDiet([...starters, ...breads, ...desserts]);
+
+  // CULINARY PAIRING RULES
+  if (currentCatId.includes('pizza') || currentCatName.includes('pizza') || currentCatId.includes('pasta') || currentCatName.includes('pasta') || currentCatName.includes('risotto')) {
+    // Pizzas & Pastas -> 1: Refreshing Mocktail/Iced Tea, 2: Garlic Bread / Starter
+    if (mocktails.length) {
+      const drink = pickBestCandidate(mocktails, item.id, 0);
+      if (drink) pairings.push({ ...drink, pairingReason: 'Crisp tea/cooler balances rich cheese' });
+    }
+    if (starters.length) {
+      const side = pickBestCandidate(starters, item.id, 1);
+      if (side) pairings.push({ ...side, pairingReason: 'Crispy warm companion' });
+    }
+  } else if (currentCatId.includes('sizzler') || currentCatName.includes('sizzler') || currentCatId.includes('lebanese') || currentCatName.includes('lebanese') || (item.spiceLevel && item.spiceLevel >= 2)) {
+    // Sizzlers / Spicy -> 1: Cooling Frappe/Shake/Mojito, 2: Sizzling Brownie / Dessert
+    const pool = shakes.length ? shakes : mocktails;
+    if (pool.length) {
+      const drink = pickBestCandidate(pool, item.id, 0);
+      if (drink) pairings.push({ ...drink, pairingReason: 'Cools the palate after hot sizzler spices' });
+    }
+    if (desserts.length) {
+      const sweet = pickBestCandidate(desserts, item.id, 1);
+      if (sweet) pairings.push({ ...sweet, pairingReason: 'The classic sweet finish' });
+    }
+  } else if (currentCatId.includes('main') || currentCatName.includes('indian') || currentCatName.includes('curry')) {
+    // Indian Main Course -> 1: Tandoori Breads, 2: Cool Beverage or Dessert
+    if (breads.length) {
+      const bread = pickBestCandidate(breads, item.id, 0);
+      if (bread) pairings.push({ ...bread, pairingReason: 'Fresh hot tandoori bread for gravies' });
+    }
+    const sweetPool = desserts.length ? desserts : mocktails;
+    if (sweetPool.length) {
+      const second = pickBestCandidate(sweetPool, item.id, 1);
+      if (second) pairings.push({ ...second, pairingReason: 'Traditional satisfying complement' });
+    }
+  } else if (currentCatId.includes('fondue') || currentCatName.includes('fondue') || currentCatName.includes('mexican') || currentCatId.includes('chinese') || currentCatName.includes('chinese') || currentCatName.includes('asian')) {
+    // Mexican & Asian -> 1: Citrus Mocktail, 2: Crunchy Starter / Dimsum
+    if (mocktails.length) {
+      const drink = pickBestCandidate(mocktails, item.id, 0);
+      if (drink) pairings.push({ ...drink, pairingReason: 'Tangy blend pairing with spices' });
+    }
+    if (starters.length) {
+      const starter = pickBestCandidate(starters, item.id, 1);
+      if (starter) pairings.push({ ...starter, pairingReason: 'Crispy appetizer companion' });
+    }
+  } else if (currentCatId.includes('dessert') || currentCatName.includes('dessert')) {
+    // Desserts -> Hot Artisan Coffee / Brew
+    if (coffees.length) {
+      const coffee = pickBestCandidate(coffees, item.id, 0);
+      if (coffee) pairings.push({ ...coffee, pairingReason: 'Warm artisanal roast balances sweetness' });
+    }
+  } else if (currentCatName.includes('coffee') || currentCatName.includes('mocktail') || currentCatName.includes('shake') || currentCatName.includes('drink')) {
+    // Drinks -> Starter or Dessert
+    if (desserts.length) {
+      const dessert = pickBestCandidate(desserts, item.id, 0);
+      if (dessert) pairings.push({ ...dessert, pairingReason: 'Sweet treat with your beverage' });
+    } else if (starters.length) {
+      const starter = pickBestCandidate(starters, item.id, 0);
+      if (starter) pairings.push({ ...starter, pairingReason: 'Crisp bite to accompany drink' });
+    }
+  } else {
+    // General items
+    if (popularBeverages.length) {
+      const drink = pickBestCandidate(popularBeverages, item.id, 0);
+      if (drink) pairings.push({ ...drink, pairingReason: 'Chef recommended thirst quencher' });
+    }
+    if (popularSides.length) {
+      const side = pickBestCandidate(popularSides, item.id, 1);
+      if (side) pairings.push({ ...side, pairingReason: 'Favorite dining companion' });
+    }
+  }
+
+  // Deduplicate and return max 2 items
+  const seenIds = new Set();
+  return pairings.filter(p => {
+    if (!p || !p.id || seenIds.has(p.id)) return false;
+    seenIds.add(p.id);
+    return true;
+  }).slice(0, 2);
+}
+
+function pickBestCandidate(candidates, seedString, salt = 0) {
+  if (!candidates || !candidates.length) return null;
+  const sorted = [...candidates].sort((a, b) => (b.isChefSpecial ? 1 : 0) - (a.isChefSpecial ? 1 : 0));
+  let hash = 0;
+  const str = String(seedString || 'seed');
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i) + salt;
+    hash |= 0;
+  }
+  const index = Math.abs(hash) % sorted.length;
+  return sorted[index];
 }
 
 function closeDishModal() {
