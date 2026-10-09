@@ -159,11 +159,142 @@ window.addEventListener('beforeunload', (e) => {
 });
 
 let isAdminAuthed = false;
+let adminDataLoadPromise = null;
 
 // Clear any stored admin session so refresh/reload always requires the password screen
 try {
   sessionStorage.removeItem('lamensa_admin_auth');
 } catch (e) {}
+
+// ==================== 2FA / TOTP AUTHENTICATION ENGINE (RFC 6238) ====================
+
+function base32Decode(base32) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  const cleaned = (base32 || '').replace(/=+$/, '').toUpperCase().replace(/[\s-]/g, '');
+  let bits = '';
+  for (let i = 0; i < cleaned.length; i++) {
+    const val = alphabet.indexOf(cleaned[i]);
+    if (val === -1) throw new Error('Invalid Base32 character: ' + cleaned[i]);
+    bits += val.toString(2).padStart(5, '0');
+  }
+  const bytes = [];
+  for (let i = 0; i + 8 <= bits.length; i += 8) {
+    bytes.push(parseInt(bits.substring(i, i + 8), 2));
+  }
+  return new Uint8Array(bytes);
+}
+
+function generateBase32Secret(length = 16) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  const bytes = new Uint8Array(length);
+  if (window.crypto && window.crypto.getRandomValues) {
+    window.crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < length; i++) bytes[i] = Math.floor(Math.random() * 256);
+  }
+  let secret = '';
+  for (let i = 0; i < length; i++) {
+    secret += alphabet[bytes[i] % alphabet.length];
+  }
+  return secret;
+}
+
+function generateEmergencyRecoveryCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes = new Uint8Array(8);
+  if (window.crypto && window.crypto.getRandomValues) {
+    window.crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < 8; i++) bytes[i] = Math.floor(Math.random() * 256);
+  }
+  let p1 = '', p2 = '';
+  for (let i = 0; i < 4; i++) p1 += chars[bytes[i] % chars.length];
+  for (let i = 4; i < 8; i++) p2 += chars[bytes[i] % chars.length];
+  return `LM-${p1}-${p2}`;
+}
+
+async function generateBrowserTOTP(secretBase32, timeSec = Math.floor(Date.now() / 1000), timeStep = 30) {
+  const counter = Math.floor(timeSec / timeStep);
+  const counterBuffer = new ArrayBuffer(8);
+  const view = new DataView(counterBuffer);
+  view.setUint32(0, Math.floor(counter / 0x100000000), false);
+  view.setUint32(4, counter >>> 0, false);
+
+  const keyBytes = base32Decode(secretBase32);
+  const cryptoKey = await window.crypto.subtle.importKey(
+    'raw',
+    keyBytes,
+    { name: 'HMAC', hash: 'SHA-1' },
+    false,
+    ['sign']
+  );
+
+  const signature = await window.crypto.subtle.sign('HMAC', cryptoKey, counterBuffer);
+  const hmac = new Uint8Array(signature);
+  const offset = hmac[hmac.length - 1] & 0x0f;
+  const binary =
+    ((hmac[offset] & 0x7f) << 24) |
+    ((hmac[offset + 1] & 0xff) << 16) |
+    ((hmac[offset + 2] & 0xff) << 8) |
+    (hmac[offset + 3] & 0xff);
+
+  const otp = binary % 1000000;
+  return otp.toString().padStart(6, '0');
+}
+
+async function verifyBrowserTOTP(token, secretBase32) {
+  if (!token || !secretBase32) return false;
+  const cleanToken = token.toString().trim().replace(/[\s-]/g, '');
+  if (cleanToken.length !== 6) return false;
+  const now = Math.floor(Date.now() / 1000);
+  // Check drift window of [-60s, -30s, 0s, +30s, +60s]
+  for (const offset of [0, -1, 1, -2, 2]) {
+    try {
+      const code = await generateBrowserTOTP(secretBase32, now + offset * 30);
+      if (code === cleanToken) return true;
+    } catch (e) {
+      console.warn('TOTP verification step error:', e);
+    }
+  }
+  return false;
+}
+
+// Switch between Password, 2FA Authenticator, and Recovery Code steps
+function switchAuthStep(step) {
+  const stepPassword = document.getElementById('adminAuthStepPassword');
+  const step2FA = document.getElementById('adminAuthStep2FA');
+  const stepBackup = document.getElementById('adminAuthStepBackup');
+
+  if (stepPassword) stepPassword.classList.add('hidden');
+  if (step2FA) step2FA.classList.add('hidden');
+  if (stepBackup) stepBackup.classList.add('hidden');
+
+  if (step === '2fa') {
+    if (step2FA) step2FA.classList.remove('hidden');
+    const err2fa = document.getElementById('admin2FAError');
+    if (err2fa) err2fa.classList.add('hidden');
+    const input2fa = document.getElementById('admin2FACodeInput');
+    if (input2fa) {
+      input2fa.value = '';
+      setTimeout(() => input2fa.focus(), 150);
+    }
+  } else if (step === 'backup') {
+    if (stepBackup) stepBackup.classList.remove('hidden');
+    const errBackup = document.getElementById('adminBackupError');
+    if (errBackup) errBackup.classList.add('hidden');
+    const inputBackup = document.getElementById('adminBackupCodeInput');
+    if (inputBackup) {
+      inputBackup.value = '';
+      setTimeout(() => inputBackup.focus(), 150);
+    }
+  } else {
+    if (stepPassword) stepPassword.classList.remove('hidden');
+    const errPass = document.getElementById('adminLoginError');
+    if (errPass) errPass.classList.add('hidden');
+    const passInput = document.getElementById('adminPasswordInput');
+    if (passInput) setTimeout(() => passInput.focus(), 150);
+  }
+}
 
 // Check Admin Authentication on Load (Always requires password on page reload / refresh)
 function checkAdminAuth() {
@@ -174,6 +305,7 @@ function checkAdminAuth() {
     lockScreen.classList.add('hidden');
   } else {
     lockScreen.classList.remove('hidden');
+    switchAuthStep('password');
     const passInput = document.getElementById('adminPasswordInput');
     const errEl = document.getElementById('adminLoginError');
     if (errEl) errEl.classList.add('hidden');
@@ -184,17 +316,32 @@ function checkAdminAuth() {
   }
 }
 
-// Handle Admin Unlock Submit
-function handleAdminLogin(e) {
+// Handle Admin Unlock Submit (Step 1: Password)
+async function handleAdminLogin(e) {
   if (e) e.preventDefault();
   const passInput = document.getElementById('adminPasswordInput');
   const errEl = document.getElementById('adminLoginError');
   const entered = (passInput ? passInput.value : '').trim();
 
+  // Wait if data load is currently in flight
+  if (adminDataLoadPromise) {
+    try {
+      await adminDataLoadPromise;
+    } catch (ignore) {}
+  }
+
   const customPass = adminState.settings && adminState.settings.adminPassword;
   if (entered === DEFAULT_ADMIN_PASS || (customPass && entered === customPass)) {
-    isAdminAuthed = true;
     if (errEl) errEl.classList.add('hidden');
+
+    // Check if Two-Factor Authentication is enabled
+    const has2FA = Boolean(adminState.settings && adminState.settings.twoFactorEnabled && adminState.settings.twoFactorSecret);
+    if (has2FA) {
+      switchAuthStep('2fa');
+      return;
+    }
+
+    isAdminAuthed = true;
     const lockScreen = document.getElementById('adminLockScreen');
     if (lockScreen) lockScreen.classList.add('hidden');
     showAdminToast('Dashboard Unlocked. Welcome!', 'success');
@@ -211,10 +358,93 @@ function handleAdminLogin(e) {
   }
 }
 
+// Handle Admin 2FA Code Submit (Step 2: 6-Digit TOTP Code)
+async function handleAdmin2FASubmit(e) {
+  if (e) e.preventDefault();
+  const codeInput = document.getElementById('admin2FACodeInput');
+  const errEl = document.getElementById('admin2FAError');
+  const entered = (codeInput ? codeInput.value : '').trim().replace(/[\s-]/g, '');
+
+  if (!entered || entered.length !== 6) {
+    if (errEl) {
+      errEl.textContent = 'Please enter all 6 digits.';
+      errEl.classList.remove('hidden');
+    }
+    if (codeInput) codeInput.focus();
+    return;
+  }
+
+  const secret = adminState.settings && adminState.settings.twoFactorSecret;
+  if (!secret) {
+    isAdminAuthed = true;
+    const lockScreen = document.getElementById('adminLockScreen');
+    if (lockScreen) lockScreen.classList.add('hidden');
+    showAdminToast('Dashboard Unlocked.', 'info');
+    return;
+  }
+
+  const isValid = await verifyBrowserTOTP(entered, secret);
+  if (isValid) {
+    isAdminAuthed = true;
+    if (errEl) errEl.classList.add('hidden');
+    const lockScreen = document.getElementById('adminLockScreen');
+    if (lockScreen) lockScreen.classList.add('hidden');
+    if (codeInput) codeInput.value = '';
+    showAdminToast('2FA Verified! Dashboard Unlocked.', 'success');
+  } else {
+    if (errEl) {
+      errEl.textContent = 'Invalid 6-digit code. Please check Google Authenticator.';
+      errEl.classList.remove('hidden');
+    }
+    if (codeInput) {
+      codeInput.classList.add('border-rose-500');
+      setTimeout(() => codeInput.classList.remove('border-rose-500'), 1500);
+      codeInput.focus();
+    }
+  }
+}
+
+// Handle Admin Recovery Code Submit (Step 3: Emergency Recovery)
+function handleAdminBackupCodeSubmit(e) {
+  if (e) e.preventDefault();
+  const backupInput = document.getElementById('adminBackupCodeInput');
+  const errEl = document.getElementById('adminBackupError');
+  const entered = (backupInput ? backupInput.value : '').toUpperCase().replace(/[\s-]/g, '');
+  const saved = (adminState.settings && adminState.settings.twoFactorRecoveryCode || '').toUpperCase().replace(/[\s-]/g, '');
+
+  if (!entered) {
+    if (errEl) {
+      errEl.textContent = 'Please enter your emergency recovery code.';
+      errEl.classList.remove('hidden');
+    }
+    if (backupInput) backupInput.focus();
+    return;
+  }
+
+  if (saved && entered === saved) {
+    isAdminAuthed = true;
+    if (errEl) errEl.classList.add('hidden');
+    const lockScreen = document.getElementById('adminLockScreen');
+    if (lockScreen) lockScreen.classList.add('hidden');
+    if (backupInput) backupInput.value = '';
+    showAdminToast('Emergency Recovery Code accepted! Dashboard Unlocked.', 'success');
+  } else {
+    if (errEl) {
+      errEl.textContent = 'Invalid recovery code. Please check and try again.';
+      errEl.classList.remove('hidden');
+    }
+    if (backupInput) {
+      backupInput.classList.add('border-rose-500');
+      setTimeout(() => backupInput.classList.remove('border-rose-500'), 1500);
+      backupInput.focus();
+    }
+  }
+}
+
 // Initialize Admin on DOM Ready
 document.addEventListener('DOMContentLoaded', () => {
   checkAdminAuth();
-  fetchAdminData();
+  adminDataLoadPromise = fetchAdminData();
   setupEventListeners();
   initFirebaseLiveListener();
 });
@@ -1450,6 +1680,7 @@ function populateProfileForm() {
   renderQuickFiltersList();
   populateQuickFilterCategories();
   renderCustomTags();
+  updateTwoFactorUIStatus();
 }
 
 function renderQuickFiltersList() {
@@ -1639,6 +1870,206 @@ function saveProfileSettings(e) {
   }
 
   markDraftChanged('Restaurant profile & logo updated');
+}
+
+// ==================== 2FA SETTINGS & MODALS HANDLERS ====================
+
+let pendingTwoFactorSecret = null;
+
+function openTwoFactorSetupModal() {
+  const existingSecret = adminState.settings && adminState.settings.twoFactorSecret;
+  pendingTwoFactorSecret = existingSecret || generateBase32Secret(16);
+
+  // Format secret with spacing for readability (e.g. ABCD EFGH IJKL MNOP)
+  const formatted = pendingTwoFactorSecret.match(/.{1,4}/g)?.join(' ') || pendingTwoFactorSecret;
+  const secretEl = document.getElementById('twoFactorSecretText');
+  if (secretEl) secretEl.textContent = formatted;
+
+  // Build standard otpauth URI
+  const otpAuthUri = `otpauth://totp/LA%20MENSA%20Admin:admin?secret=${pendingTwoFactorSecret}&issuer=LA%20MENSA%20Admin&algorithm=SHA1&digits=6&period=30`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(otpAuthUri)}`;
+  const qrImg = document.getElementById('twoFactorQrImage');
+  if (qrImg) qrImg.src = qrUrl;
+
+  const codeInput = document.getElementById('twoFactorVerifyCodeInput');
+  if (codeInput) {
+    codeInput.value = '';
+    codeInput.classList.remove('border-rose-500');
+  }
+
+  const errEl = document.getElementById('twoFactorVerifyError');
+  if (errEl) errEl.classList.add('hidden');
+
+  const modal = document.getElementById('twoFactorSetupModal');
+  if (modal) modal.classList.remove('hidden');
+
+  if (codeInput) setTimeout(() => codeInput.focus(), 150);
+}
+
+function closeTwoFactorSetupModal() {
+  const modal = document.getElementById('twoFactorSetupModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function copyTwoFactorSecret() {
+  if (!pendingTwoFactorSecret) return;
+  navigator.clipboard.writeText(pendingTwoFactorSecret).then(() => {
+    const btnText = document.getElementById('copySecretBtnText');
+    if (btnText) {
+      btnText.textContent = 'Copied!';
+      setTimeout(() => { btnText.textContent = 'Copy Key'; }, 1500);
+    }
+    showAdminToast('Secret Key copied to clipboard', 'info');
+  }).catch(() => {
+    showAdminToast('Could not copy automatically. Please select text manually.', 'warning');
+  });
+}
+
+async function verifyAndEnableTwoFactor() {
+  const codeInput = document.getElementById('twoFactorVerifyCodeInput');
+  const errEl = document.getElementById('twoFactorVerifyError');
+  const code = (codeInput ? codeInput.value : '').trim().replace(/[\s-]/g, '');
+
+  if (!code || code.length !== 6) {
+    if (errEl) {
+      errEl.textContent = 'Please enter a 6-digit code from your authenticator app.';
+      errEl.classList.remove('hidden');
+    }
+    if (codeInput) codeInput.focus();
+    return;
+  }
+
+  const isValid = await verifyBrowserTOTP(code, pendingTwoFactorSecret);
+  if (!isValid) {
+    if (errEl) {
+      errEl.textContent = 'Invalid verification code. Please check Google Authenticator and try again.';
+      errEl.classList.remove('hidden');
+    }
+    if (codeInput) {
+      codeInput.classList.add('border-rose-500');
+      setTimeout(() => codeInput.classList.remove('border-rose-500'), 1500);
+      codeInput.focus();
+    }
+    return;
+  }
+
+  // Activate 2FA in settings
+  adminState.settings = adminState.settings || {};
+  adminState.settings.twoFactorEnabled = true;
+  adminState.settings.twoFactorSecret = pendingTwoFactorSecret;
+  if (!adminState.settings.twoFactorRecoveryCode) {
+    adminState.settings.twoFactorRecoveryCode = generateEmergencyRecoveryCode();
+  }
+
+  closeTwoFactorSetupModal();
+  updateTwoFactorUIStatus();
+
+  // Auto-sync settings to Firebase so 2FA status is saved immediately
+  try {
+    await pushStateToFirebase();
+    adminState.hasDraftChanges = false;
+    adminState.draftChangesCount = 0;
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    updateDraftNavigationUI();
+  } catch (syncErr) {
+    console.warn('Sync fallback to draft:', syncErr);
+    markDraftChanged('Two-Factor Authentication activated');
+  }
+
+  showRecoveryCodeModal();
+  showAdminToast('Two-Factor Authentication activated successfully!', 'success');
+}
+
+async function disableTwoFactorAuth() {
+  const confirmed = confirm('Are you sure you want to disable Two-Factor Authentication? Your admin dashboard will only require a password to log in.');
+  if (!confirmed) return;
+
+  adminState.settings = adminState.settings || {};
+  adminState.settings.twoFactorEnabled = false;
+  updateTwoFactorUIStatus();
+
+  try {
+    await pushStateToFirebase();
+    adminState.hasDraftChanges = false;
+    adminState.draftChangesCount = 0;
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    updateDraftNavigationUI();
+  } catch (syncErr) {
+    markDraftChanged('Two-Factor Authentication disabled');
+  }
+
+  showAdminToast('Two-Factor Authentication disabled.', 'info');
+}
+
+function showRecoveryCodeModal() {
+  const recoveryCode = (adminState.settings && adminState.settings.twoFactorRecoveryCode) || generateEmergencyRecoveryCode();
+  if (adminState.settings) adminState.settings.twoFactorRecoveryCode = recoveryCode;
+
+  const displayEl = document.getElementById('recoveryCodeDisplay');
+  if (displayEl) displayEl.textContent = recoveryCode;
+
+  const modal = document.getElementById('recoveryCodeModal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeRecoveryCodeModal() {
+  const modal = document.getElementById('recoveryCodeModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function copyRecoveryCode() {
+  const displayEl = document.getElementById('recoveryCodeDisplay');
+  const code = displayEl ? displayEl.textContent.trim() : '';
+  if (!code) return;
+
+  navigator.clipboard.writeText(code).then(() => {
+    const btnText = document.getElementById('copyRecoveryBtnText');
+    if (btnText) {
+      btnText.textContent = 'Copied!';
+      setTimeout(() => { btnText.textContent = 'Copy Recovery Code'; }, 1500);
+    }
+    showAdminToast('Emergency Recovery Code copied!', 'info');
+  }).catch(() => {
+    showAdminToast('Could not copy automatically. Please select text manually.', 'warning');
+  });
+}
+
+function updateTwoFactorUIStatus() {
+  const isEnabled = Boolean(adminState.settings && adminState.settings.twoFactorEnabled && adminState.settings.twoFactorSecret);
+  const badge = document.getElementById('twoFactorStatusBadge');
+  const setupBtnText = document.getElementById('btnSetup2FAText');
+  const disableBtn = document.getElementById('btnDisable2FA');
+  const recoveryBtn = document.getElementById('btnViewRecoveryCode');
+
+  if (badge) {
+    if (isEnabled) {
+      badge.textContent = 'Active / Protected';
+      badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300';
+    } else {
+      badge.textContent = 'Disabled';
+      badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-stone-200 text-stone-700';
+    }
+  }
+
+  if (setupBtnText) {
+    setupBtnText.textContent = isEnabled ? 'Reconfigure Authenticator' : 'Setup Google Authenticator';
+  }
+
+  if (disableBtn) {
+    if (isEnabled) {
+      disableBtn.classList.remove('hidden');
+    } else {
+      disableBtn.classList.add('hidden');
+    }
+  }
+
+  if (recoveryBtn) {
+    if (isEnabled) {
+      recoveryBtn.classList.remove('hidden');
+    } else {
+      recoveryBtn.classList.add('hidden');
+    }
+  }
 }
 
 // 7. TAB 4: MANAGE FRONT PAGE (Screenshot 4)
@@ -1949,6 +2380,29 @@ function setupEventListeners() {
       renderDishesTable();
     });
   }
+
+  // 2FA Auto-submit when 6 digits entered
+  const input2fa = document.getElementById('admin2FACodeInput');
+  if (input2fa) {
+    input2fa.addEventListener('input', (e) => {
+      const val = e.target.value.replace(/\D/g, '');
+      e.target.value = val;
+      if (val.length === 6) {
+        handleAdmin2FASubmit();
+      }
+    });
+  }
+
+  const verifyInput = document.getElementById('twoFactorVerifyCodeInput');
+  if (verifyInput) {
+    verifyInput.addEventListener('input', (e) => {
+      const val = e.target.value.replace(/\D/g, '');
+      e.target.value = val;
+      if (val.length === 6) {
+        verifyAndEnableTwoFactor();
+      }
+    });
+  }
 }
 
 // Image Uploader (ImgBB)
@@ -1993,6 +2447,7 @@ function lockAdminSession() {
   const lockScreen = document.getElementById('adminLockScreen');
   if (lockScreen) {
     lockScreen.classList.remove('hidden');
+    switchAuthStep('password');
     const passInput = document.getElementById('adminPasswordInput');
     const errEl = document.getElementById('adminLoginError');
     if (errEl) errEl.classList.add('hidden');
