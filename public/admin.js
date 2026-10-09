@@ -666,9 +666,10 @@ function openBulkBadgesModal(presetCategoryId) {
     catSel.value = adminState.categories[0].id;
   }
 
-  updateBulkBadgeDishCount();
+  // 2. Render dishes for the selected category
+  renderBulkBadgeDishList();
 
-  // 2. Reset checkboxes
+  // 3. Reset standard badge checkboxes
   const jainCb = document.getElementById('bulkBadgeJain');
   const specCb = document.getElementById('bulkBadgeSpecial');
   const bestCb = document.getElementById('bulkBadgeBestseller');
@@ -676,14 +677,14 @@ function openBulkBadgesModal(presetCategoryId) {
   if (specCb) specCb.checked = false;
   if (bestCb) bestCb.checked = false;
 
-  // 3. Render custom options checkboxes
+  // 4. Render custom options checkboxes
   const customContainer = document.getElementById('bulkBadgeCustomOptionsContainer');
   if (customContainer) {
     if (!adminState.customDishOptions || adminState.customDishOptions.length === 0) {
       customContainer.innerHTML = '<span class="text-[11px] text-stone-400 italic">No custom badges created yet. You can add them in Restaurant Profile tab.</span>';
     } else {
       customContainer.innerHTML = adminState.customDishOptions.map(tag => `
-        <label class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-[#dcd7c9] hover:border-[#dfb15b] cursor-pointer transition shadow-xs text-xs font-semibold text-[#0d2d24]">
+        <label class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-[#dcd7c9] hover:border-[#dfb15b] cursor-pointer transition shadow-2xs text-xs font-semibold text-[#0d2d24]">
           <input type="checkbox" data-custom-opt="${tag}" class="bulk-badge-custom-cb rounded text-[#0d2d24]" />
           <span>${tag}</span>
         </label>
@@ -699,38 +700,116 @@ function closeBulkBadgesModal() {
   if (modal) modal.classList.add('hidden');
 }
 
-function updateBulkBadgeDishCount() {
-  const catSel = document.getElementById('bulkBadgeCategorySelect');
-  const label = document.getElementById('bulkBadgeDishCountLabel');
-  if (!catSel || !label) return;
+function onBulkBadgeCategoryChange() {
+  renderBulkBadgeDishList();
+}
 
-  const val = catSel.value;
-  if (!val) {
-    label.textContent = 'Please choose a category';
-    label.className = 'text-[11px] font-bold text-stone-500';
+function renderBulkBadgeDishList() {
+  const catSel = document.getElementById('bulkBadgeCategorySelect');
+  const container = document.getElementById('bulkBadgeDishListContainer');
+  const allCountEl = document.getElementById('bulkBadgeAllDishesCount');
+  if (!catSel || !container) return;
+
+  const catId = catSel.value;
+  const dishes = adminState.items.filter(i => catId === 'ALL' || i.categoryId === catId);
+  const currency = (adminState.settings && adminState.settings.currencySymbol) || '₹';
+
+  if (allCountEl) allCountEl.textContent = dishes.length;
+
+  if (dishes.length === 0) {
+    container.innerHTML = `
+      <div class="py-8 text-center text-xs text-stone-400 italic">
+        No dishes found in this category.
+      </div>
+    `;
+    updateBulkBadgeSelectionUI();
     return;
   }
 
-  let count = 0;
-  let name = '';
-  if (val === 'ALL') {
-    count = adminState.items.length;
-    name = 'All Categories';
-  } else {
-    const cat = adminState.categories.find(c => c.id === val);
-    name = cat ? cat.name : val;
-    count = adminState.items.filter(i => i.categoryId === val).length;
+  container.innerHTML = dishes.map(dish => {
+    return `
+      <label class="bulk-dish-row flex items-center justify-between p-2.5 rounded-xl hover:bg-amber-50/70 border border-transparent hover:border-[#dfb15b]/30 cursor-pointer transition text-xs" data-dish-id="${dish.id}" data-dish-name="${dish.name.toLowerCase()}">
+        <div class="flex items-center gap-2.5 min-w-0 pr-2">
+          <input
+            type="checkbox"
+            value="${dish.id}"
+            class="bulk-dish-item-cb rounded text-[#0d2d24] w-4 h-4 cursor-pointer shrink-0"
+            checked
+            onchange="updateBulkBadgeSelectionUI()"
+          />
+          <div class="min-w-0">
+            <span class="font-bold text-[#0d2d24] truncate block">${dish.name}</span>
+            <span class="text-[11px] text-stone-500 font-semibold">${currency}${dish.price}</span>
+          </div>
+        </div>
+
+        <!-- Current Badges Preview on this dish -->
+        <div class="flex items-center gap-1 shrink-0 flex-wrap justify-end">
+          ${dish.isJain ? '<span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-50 text-amber-900 border border-amber-300">🟡 Jain</span>' : ''}
+          ${dish.isChefSpecial ? '<span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-[#ffdaa9] text-[#0d2d24] border border-[#dfb15b]">⭐ Chef</span>' : ''}
+          ${dish.isBestseller ? '<span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-800 border border-emerald-300">🔥 Popular</span>' : ''}
+          ${(dish.customOptions && Array.isArray(dish.customOptions)) ? dish.customOptions.map(o => `<span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-purple-50 text-purple-800 border border-purple-200">🏷️ ${o}</span>`).join('') : ''}
+        </div>
+      </label>
+    `;
+  }).join('');
+
+  // Clear search input if any
+  const searchInput = document.getElementById('bulkDishSearchInput');
+  if (searchInput) searchInput.value = '';
+
+  updateBulkBadgeSelectionUI();
+}
+
+function toggleSelectAllBulkDishes(selectAll) {
+  const checkboxes = document.querySelectorAll('.bulk-dish-item-cb');
+  checkboxes.forEach(cb => {
+    const row = cb.closest('.bulk-dish-row');
+    if (!row || !row.classList.contains('hidden')) {
+      cb.checked = selectAll;
+    }
+  });
+  updateBulkBadgeSelectionUI();
+}
+
+function updateBulkBadgeSelectionUI() {
+  const allCheckboxes = document.querySelectorAll('.bulk-dish-item-cb');
+  const checkedBoxes = document.querySelectorAll('.bulk-dish-item-cb:checked');
+  const count = checkedBoxes.length;
+  const total = allCheckboxes.length;
+
+  const countLabel = document.getElementById('bulkBadgeDishCountLabel');
+  if (countLabel) {
+    countLabel.textContent = `${count} of ${total} dishes selected`;
+    countLabel.className = count > 0 ? 'text-[11px] font-bold text-emerald-800' : 'text-[11px] font-bold text-stone-400';
   }
 
-  label.textContent = `${count} dishes in "${name}"`;
-  label.className = 'text-[11px] font-bold text-emerald-800';
+  const applyBtnCount = document.getElementById('bulkApplyBtnCount');
+  if (applyBtnCount) applyBtnCount.textContent = count;
+
+  const removeBtnCount = document.getElementById('bulkRemoveBtnCount');
+  if (removeBtnCount) removeBtnCount.textContent = count;
+}
+
+function filterBulkDishListItems() {
+  const query = (document.getElementById('bulkDishSearchInput')?.value || '').trim().toLowerCase();
+  const rows = document.querySelectorAll('.bulk-dish-row');
+  rows.forEach(row => {
+    const name = row.dataset.dishName || '';
+    if (!query || name.includes(query)) {
+      row.classList.remove('hidden');
+    } else {
+      row.classList.add('hidden');
+    }
+  });
 }
 
 function executeBulkBadges(mode) {
-  const catSel = document.getElementById('bulkBadgeCategorySelect');
-  const targetCatId = catSel ? catSel.value : '';
-  if (!targetCatId) {
-    showAdminToast('Please select a category first', 'warning');
+  const checkedBoxes = Array.from(document.querySelectorAll('.bulk-dish-item-cb:checked'));
+  const selectedDishIds = checkedBoxes.map(cb => cb.value);
+
+  if (selectedDishIds.length === 0) {
+    showAdminToast('Please select at least one dish using the checkboxes', 'warning');
     return;
   }
 
@@ -747,16 +826,7 @@ function executeBulkBadges(mode) {
     return;
   }
 
-  // Filter items in category
-  const targetItems = adminState.items.filter(i => targetCatId === 'ALL' || i.categoryId === targetCatId);
-  if (targetItems.length === 0) {
-    showAdminToast('No dishes found in the selected category', 'info');
-    return;
-  }
-
-  const catName = targetCatId === 'ALL'
-    ? 'All Categories'
-    : (adminState.categories.find(c => c.id === targetCatId)?.name || targetCatId);
+  const targetItems = adminState.items.filter(i => selectedDishIds.includes(i.id));
 
   let updatedCount = 0;
   const badgeNames = [];
@@ -801,9 +871,9 @@ function executeBulkBadges(mode) {
   renderCategoriesGrid();
 
   const actionText = mode === 'add' ? 'Applied' : 'Removed';
-  const desc = `${actionText} badges [${badgeNames.join(', ')}] across ${updatedCount} dishes in "${catName}"`;
+  const desc = `${actionText} badges [${badgeNames.join(', ')}] on ${updatedCount} selected dishes`;
   markDraftChanged(desc);
-  showAdminToast(`${actionText} badges on ${updatedCount} dishes in "${catName}"!`, 'success');
+  showAdminToast(`${actionText} badges on ${updatedCount} selected dishes!`, 'success');
 }
 
 async function saveDish(e) {
