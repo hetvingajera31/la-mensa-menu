@@ -1000,26 +1000,23 @@ const foodieBotState = {
 };
 
 function scheduleFoodieBotGreeting() {
-  if (foodieBotState.hasShownGreeting) return;
   const bubble = document.getElementById('foodieBotGreetingBubble');
   if (!bubble) return;
-  if (sessionStorage.getItem('dismissedFoodieBotGreeting')) return;
 
   if (foodieBotState.greetingTimer) clearTimeout(foodieBotState.greetingTimer);
 
+  // Show greeting bubble 2.5s after page load / reload
   foodieBotState.greetingTimer = setTimeout(() => {
     if (!foodieBotState.isOpen && (!state.settings || state.settings.enableFoodieBot !== false)) {
       bubble.classList.remove('hidden');
-      foodieBotState.hasShownGreeting = true;
     }
-  }, 3500);
+  }, 2500);
 }
 
 function dismissFoodieBotGreeting(e) {
   if (e) e.stopPropagation();
   const bubble = document.getElementById('foodieBotGreetingBubble');
   if (bubble) bubble.classList.add('hidden');
-  sessionStorage.setItem('dismissedFoodieBotGreeting', 'true');
 }
 
 function toggleFoodieBotModal() {
