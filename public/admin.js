@@ -2049,18 +2049,19 @@ function showRecoveryCodeModal() {
 }
 
 // Unlocked actions (run ONLY after verifying Lamensa3214)
-function proceedToOpenTwoFactorSetupModal() {
-  const existingSecret = adminState.settings && adminState.settings.twoFactorSecret;
-  pendingTwoFactorSecret = existingSecret || generateBase32Secret(16);
+function renderTwoFactorModalSecretAndQR() {
+  if (!pendingTwoFactorSecret) {
+    pendingTwoFactorSecret = generateBase32Secret(16);
+  }
 
   // Format secret with spacing for readability (e.g. ABCD EFGH IJKL MNOP)
   const formatted = pendingTwoFactorSecret.match(/.{1,4}/g)?.join(' ') || pendingTwoFactorSecret;
   const secretEl = document.getElementById('twoFactorSecretText');
   if (secretEl) secretEl.textContent = formatted;
 
-  // Build standard otpauth URI
+  // Build standard otpauth URI with unique timestamp to prevent QR image caching
   const otpAuthUri = `otpauth://totp/LA%20MENSA%20Admin:admin?secret=${pendingTwoFactorSecret}&issuer=LA%20MENSA%20Admin&algorithm=SHA1&digits=6&period=30`;
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(otpAuthUri)}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(otpAuthUri)}&t=${Date.now()}`;
   const qrImg = document.getElementById('twoFactorQrImage');
   if (qrImg) qrImg.src = qrUrl;
 
@@ -2072,10 +2073,23 @@ function proceedToOpenTwoFactorSetupModal() {
 
   const errEl = document.getElementById('twoFactorVerifyError');
   if (errEl) errEl.classList.add('hidden');
+}
+
+function regenerateTwoFactorSecret() {
+  pendingTwoFactorSecret = generateBase32Secret(16);
+  renderTwoFactorModalSecretAndQR();
+  showAdminToast('New 2FA Secret Key & QR Code generated!', 'info');
+}
+
+function proceedToOpenTwoFactorSetupModal() {
+  // Always generate a brand new 16-char secret so reconfiguring issues a completely fresh key
+  pendingTwoFactorSecret = generateBase32Secret(16);
+  renderTwoFactorModalSecretAndQR();
 
   const modal = document.getElementById('twoFactorSetupModal');
   if (modal) modal.classList.remove('hidden');
 
+  const codeInput = document.getElementById('twoFactorVerifyCodeInput');
   if (codeInput) setTimeout(() => codeInput.focus(), 150);
 }
 

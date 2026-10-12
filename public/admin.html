@@ -1427,10 +1427,16 @@
       <div class="space-y-1.5 p-3 rounded-2xl bg-[#faf9f5] border border-[#e6e2d6]">
         <div class="flex items-center justify-between">
           <span class="text-[10px] font-bold text-stone-500 uppercase">Or enter key manually:</span>
-          <button type="button" onclick="copyTwoFactorSecret()" class="text-[11px] font-bold text-amber-800 hover:text-amber-900 cursor-pointer flex items-center gap-1">
-            <i class="fa-regular fa-copy"></i>
-            <span id="copySecretBtnText">Copy Key</span>
-          </button>
+          <div class="flex items-center gap-2.5">
+            <button type="button" onclick="regenerateTwoFactorSecret()" class="text-[11px] font-bold text-stone-600 hover:text-stone-900 cursor-pointer flex items-center gap-1 transition" title="Generate a fresh secret key">
+              <i class="fa-solid fa-arrows-rotate text-[10px] text-amber-700"></i>
+              <span>New Key</span>
+            </button>
+            <button type="button" onclick="copyTwoFactorSecret()" class="text-[11px] font-bold text-amber-800 hover:text-amber-900 cursor-pointer flex items-center gap-1">
+              <i class="fa-regular fa-copy"></i>
+              <span id="copySecretBtnText">Copy Key</span>
+            </button>
+          </div>
         </div>
         <div class="bg-white px-3 py-2 rounded-xl border border-stone-200 font-mono text-center font-bold text-xs tracking-widest text-[#0d2d24] select-all break-all" id="twoFactorSecretText">
           ----------------
@@ -1539,6 +1545,6 @@
   <script src="firebase-config.js?v=2.3"></script>
 
   <!-- Admin Controller Script -->
-  <script src="admin.js?v=2.8"></script>
+  <script src="admin.js?v=2.9"></script>
 </body>
 </html>
