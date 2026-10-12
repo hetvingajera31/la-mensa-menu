@@ -768,6 +768,30 @@
             </label>
           </div>
 
+          <!-- Feature Setting: Foodie Dining Assistant Bot (Toggle ON/OFF) -->
+          <div class="p-5 rounded-2xl bg-amber-50/60 border border-amber-200/90 flex items-center justify-between gap-4 flex-wrap">
+            <div class="flex items-start gap-3">
+              <div class="w-10 h-10 rounded-2xl bg-white border border-amber-300 text-amber-800 flex items-center justify-center text-lg shrink-0 shadow-xs">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h4 class="text-xs font-bold text-[#0d2d24] uppercase tracking-wider">Foodie Dining Assistant Bot</h4>
+                  <span id="foodieBotStatusBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">Enabled</span>
+                </div>
+                <p class="text-[11px] text-stone-600 mt-1">
+                  Floating AI-style assistant on bottom-right of menu with greeting bubble that asks customers what they're craving and guides them to the perfect dish.
+                </p>
+              </div>
+            </div>
+
+            <!-- Toggle Switch -->
+            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+              <input type="checkbox" id="toggleFoodieBotInput" onchange="onToggleFoodieBotChange(this.checked)" class="sr-only peer" checked />
+              <div class="w-12 h-6 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0d2d24]"></div>
+            </label>
+          </div>
+
           <!-- Announcement Banner -->
           <div>
             <label class="block text-[11px] font-bold tracking-wider text-stone-600 uppercase mb-1.5">

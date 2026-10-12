@@ -1716,6 +1716,12 @@ function populateProfileForm() {
   const togglePairing = document.getElementById('toggleSmartPairingInput');
   if (togglePairing) togglePairing.checked = isPairingEnabled;
   updateSmartPairingBadgeUI(isPairingEnabled);
+
+  // Foodie Dining Assistant Bot toggle UI
+  const isBotEnabled = adminState.settings.enableFoodieBot !== false;
+  const toggleBot = document.getElementById('toggleFoodieBotInput');
+  if (toggleBot) toggleBot.checked = isBotEnabled;
+  updateFoodieBotBadgeUI(isBotEnabled);
 }
 
 function onToggleSmartPairingChange(isChecked) {
@@ -1728,6 +1734,26 @@ function onToggleSmartPairingChange(isChecked) {
 
 function updateSmartPairingBadgeUI(isEnabled) {
   const badge = document.getElementById('smartPairingStatusBadge');
+  if (!badge) return;
+  if (isEnabled) {
+    badge.textContent = 'Enabled';
+    badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300';
+  } else {
+    badge.textContent = 'Disabled';
+    badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-stone-200 text-stone-700';
+  }
+}
+
+function onToggleFoodieBotChange(isChecked) {
+  adminState.settings = adminState.settings || {};
+  adminState.settings.enableFoodieBot = isChecked;
+  updateFoodieBotBadgeUI(isChecked);
+  markDraftChanged(`Foodie Assistant Bot ${isChecked ? 'enabled' : 'disabled'}`);
+  showAdminToast(`Foodie Assistant Bot ${isChecked ? 'enabled on menu' : 'hidden from menu'}`, 'info');
+}
+
+function updateFoodieBotBadgeUI(isEnabled) {
+  const badge = document.getElementById('foodieBotStatusBadge');
   if (!badge) return;
   if (isEnabled) {
     badge.textContent = 'Enabled';
@@ -1922,6 +1948,11 @@ function saveProfileSettings(e) {
   const togglePairing = document.getElementById('toggleSmartPairingInput');
   if (togglePairing) {
     adminState.settings.enableSmartPairings = togglePairing.checked;
+  }
+
+  const toggleBot = document.getElementById('toggleFoodieBotInput');
+  if (toggleBot) {
+    adminState.settings.enableFoodieBot = toggleBot.checked;
   }
 
   const newPass = document.getElementById('profPassword') ? document.getElementById('profPassword').value.trim() : '';

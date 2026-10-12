@@ -297,6 +297,18 @@ function applySettingsToUI() {
       `;
     }
   }
+
+  // Foodie Dining Assistant Bot Visibility
+  const isBotEnabled = s && s.enableFoodieBot !== false;
+  const botContainer = document.getElementById('foodieBotContainer');
+  if (botContainer) {
+    if (isBotEnabled) {
+      botContainer.classList.remove('hidden');
+      scheduleFoodieBotGreeting();
+    } else {
+      botContainer.classList.add('hidden');
+    }
+  }
 }
 
 // Setup Event Listeners
@@ -319,6 +331,8 @@ function setupEventListeners() {
     if (e.target === dishModal) closeDishModal();
     const qrModal = document.getElementById('qrModal');
     if (e.target === qrModal) closeQrModal();
+    const foodieModal = document.getElementById('foodieBotModal');
+    if (e.target === foodieModal) closeFoodieBotModal();
   });
 
   // Close on Escape key
@@ -326,6 +340,7 @@ function setupEventListeners() {
     if (e.key === 'Escape') {
       closeDishModal();
       closeQrModal();
+      closeFoodieBotModal();
     }
   });
 }
@@ -970,4 +985,512 @@ function showToast(message, type = 'info') {
     toast.style.transition = 'all 0.3s ease';
     setTimeout(() => toast.remove(), 300);
   }, 2500);
+}
+
+// ==================== 10. CHEF'S FOODIE ASSISTANT BOT ====================
+
+const foodieBotState = {
+  isOpen: false,
+  step: 1, // 1: Mood, 2: Diet, 3: Hunger, 4: Result
+  selectedMood: null,
+  selectedDiet: 'all',
+  selectedHunger: 'meal',
+  greetingTimer: null,
+  hasShownGreeting: false
+};
+
+function scheduleFoodieBotGreeting() {
+  if (foodieBotState.hasShownGreeting) return;
+  const bubble = document.getElementById('foodieBotGreetingBubble');
+  if (!bubble) return;
+  if (sessionStorage.getItem('dismissedFoodieBotGreeting')) return;
+
+  if (foodieBotState.greetingTimer) clearTimeout(foodieBotState.greetingTimer);
+
+  foodieBotState.greetingTimer = setTimeout(() => {
+    if (!foodieBotState.isOpen && (!state.settings || state.settings.enableFoodieBot !== false)) {
+      bubble.classList.remove('hidden');
+      foodieBotState.hasShownGreeting = true;
+    }
+  }, 3500);
+}
+
+function dismissFoodieBotGreeting(e) {
+  if (e) e.stopPropagation();
+  const bubble = document.getElementById('foodieBotGreetingBubble');
+  if (bubble) bubble.classList.add('hidden');
+  sessionStorage.setItem('dismissedFoodieBotGreeting', 'true');
+}
+
+function toggleFoodieBotModal() {
+  if (foodieBotState.isOpen) {
+    closeFoodieBotModal();
+  } else {
+    openFoodieBotModal();
+  }
+}
+
+function openFoodieBotModal() {
+  dismissFoodieBotGreeting();
+  foodieBotState.isOpen = true;
+  const modal = document.getElementById('foodieBotModal');
+  const card = document.getElementById('foodieBotCard');
+  if (!modal) return;
+
+  renderFoodieBotCurrentStep();
+  modal.classList.remove('hidden');
+
+  if (card) {
+    card.classList.remove('scale-95', 'opacity-0');
+    card.classList.add('scale-100', 'opacity-100');
+  }
+}
+
+function closeFoodieBotModal() {
+  foodieBotState.isOpen = false;
+  const modal = document.getElementById('foodieBotModal');
+  const card = document.getElementById('foodieBotCard');
+  if (!modal) return;
+
+  if (card) {
+    card.classList.remove('scale-100', 'opacity-100');
+    card.classList.add('scale-95', 'opacity-0');
+  }
+  setTimeout(() => {
+    modal.classList.add('hidden');
+  }, 200);
+}
+
+function resetFoodieBotQuiz() {
+  foodieBotState.step = 1;
+  foodieBotState.selectedMood = null;
+  foodieBotState.selectedDiet = 'all';
+  foodieBotState.selectedHunger = 'meal';
+  renderFoodieBotCurrentStep();
+}
+
+function setFoodieBotMood(mood) {
+  foodieBotState.selectedMood = mood;
+  foodieBotState.step = 2;
+  renderFoodieBotCurrentStep();
+}
+
+function setFoodieBotDiet(diet) {
+  foodieBotState.selectedDiet = diet;
+  foodieBotState.step = 3;
+  renderFoodieBotCurrentStep();
+}
+
+function setFoodieBotHunger(hunger) {
+  foodieBotState.selectedHunger = hunger;
+  foodieBotState.step = 4;
+  renderFoodieBotCurrentStep();
+}
+
+function setFoodieBotStep(stepNum) {
+  foodieBotState.step = stepNum;
+  renderFoodieBotCurrentStep();
+}
+
+function renderFoodieBotCurrentStep() {
+  const body = document.getElementById('foodieBotBody');
+  if (!body) return;
+
+  if (foodieBotState.step === 1) {
+    body.innerHTML = `
+      <div class="space-y-4">
+        <!-- Progress Indicator -->
+        <div class="flex items-center justify-between text-[11px] font-bold text-stone-400">
+          <span class="text-[#0d2d24] font-extrabold flex items-center gap-1.5">
+            <span class="w-5 h-5 rounded-full bg-[#0d2d24] text-[#ffdaa9] flex items-center justify-center text-[10px]">1</span>
+            Flavor Mood
+          </span>
+          <span class="flex items-center gap-1">Step 1 of 3</span>
+        </div>
+
+        <div class="text-center space-y-1">
+          <h4 class="font-serif font-bold text-lg text-[#0d2d24]">What are you craving today? ✨</h4>
+          <p class="text-xs text-stone-500">Pick your favorite craving and Chef will curate the best recipe!</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+          <button type="button" onclick="setFoodieBotMood('cheesy')" class="p-3.5 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50/50 border border-amber-200/90 hover:border-amber-400 text-left transition transform active:scale-98 cursor-pointer group shadow-2xs hover:shadow-sm">
+            <div class="flex items-center gap-3">
+              <span class="text-2xl p-2 rounded-xl bg-white shadow-2xs group-hover:scale-110 transition">🧀</span>
+              <div class="min-w-0">
+                <div class="font-bold text-xs text-[#0d2d24] group-hover:text-amber-800 transition">Cheesy & Italian Comfort</div>
+                <div class="text-[10px] text-stone-500 mt-0.5 truncate">Brick-Oven Pizza, Pastas & Fondue</div>
+              </div>
+            </div>
+          </button>
+
+          <button type="button" onclick="setFoodieBotMood('spicy')" class="p-3.5 rounded-2xl bg-gradient-to-br from-rose-50 to-orange-50/50 border border-rose-200/90 hover:border-rose-400 text-left transition transform active:scale-98 cursor-pointer group shadow-2xs hover:shadow-sm">
+            <div class="flex items-center gap-3">
+              <span class="text-2xl p-2 rounded-xl bg-white shadow-2xs group-hover:scale-110 transition">🌶️</span>
+              <div class="min-w-0">
+                <div class="font-bold text-xs text-[#0d2d24] group-hover:text-rose-800 transition">Hot, Spicy & Sizzling</div>
+                <div class="text-[10px] text-stone-500 mt-0.5 truncate">Sizzlers, Mexican, Schezwan & Tandoor</div>
+              </div>
+            </div>
+          </button>
+
+          <button type="button" onclick="setFoodieBotMood('light')" class="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50/50 border border-emerald-200/90 hover:border-emerald-400 text-left transition transform active:scale-98 cursor-pointer group shadow-2xs hover:shadow-sm">
+            <div class="flex items-center gap-3">
+              <span class="text-2xl p-2 rounded-xl bg-white shadow-2xs group-hover:scale-110 transition">🥗</span>
+              <div class="min-w-0">
+                <div class="font-bold text-xs text-[#0d2d24] group-hover:text-emerald-800 transition">Light, Crispy & Healthy</div>
+                <div class="text-[10px] text-stone-500 mt-0.5 truncate">Soups, Fresh Salads, Titbits & Starters</div>
+              </div>
+            </div>
+          </button>
+
+          <button type="button" onclick="setFoodieBotMood('sweet_drinks')" class="p-3.5 rounded-2xl bg-gradient-to-br from-amber-50 to-purple-50/50 border border-purple-200/90 hover:border-purple-400 text-left transition transform active:scale-98 cursor-pointer group shadow-2xs hover:shadow-sm">
+            <div class="flex items-center gap-3">
+              <span class="text-2xl p-2 rounded-xl bg-white shadow-2xs group-hover:scale-110 transition">☕</span>
+              <div class="min-w-0">
+                <div class="font-bold text-xs text-[#0d2d24] group-hover:text-purple-800 transition">Sips, Shakes & Sweets</div>
+                <div class="text-[10px] text-stone-500 mt-0.5 truncate">Signature Mocktails, Coffee & Desserts</div>
+              </div>
+            </div>
+          </button>
+        </div>
+      </div>
+    `;
+  } else if (foodieBotState.step === 2) {
+    body.innerHTML = `
+      <div class="space-y-4">
+        <!-- Progress Indicator -->
+        <div class="flex items-center justify-between text-[11px] font-bold text-stone-400">
+          <button type="button" onclick="setFoodieBotStep(1)" class="text-stone-500 hover:text-[#0d2d24] font-semibold flex items-center gap-1 cursor-pointer">
+            <i class="fa-solid fa-arrow-left text-[10px]"></i> Back
+          </button>
+          <span class="text-[#0d2d24] font-extrabold flex items-center gap-1.5">
+            <span class="w-5 h-5 rounded-full bg-[#0d2d24] text-[#ffdaa9] flex items-center justify-center text-[10px]">2</span>
+            Dietary Choice
+          </span>
+          <span class="flex items-center gap-1">Step 2 of 3</span>
+        </div>
+
+        <div class="text-center space-y-1">
+          <h4 class="font-serif font-bold text-lg text-[#0d2d24]">Any dietary restrictions? 🌿</h4>
+          <p class="text-xs text-stone-500">We guarantee only matching certified preparations.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <button type="button" onclick="setFoodieBotDiet('all')" class="p-4 rounded-2xl bg-[#faf9f5] border-2 border-emerald-300 hover:border-emerald-600 text-left transition transform active:scale-98 cursor-pointer group shadow-xs">
+            <div class="flex items-center gap-3">
+              <span class="text-3xl p-2 rounded-xl bg-emerald-50 text-emerald-700 shadow-2xs">🟢</span>
+              <div class="min-w-0">
+                <div class="font-bold text-sm text-[#0d2d24] group-hover:text-emerald-800 transition">Pure Vegetarian</div>
+                <div class="text-xs text-stone-500 mt-0.5">All 100% pure veg recipes</div>
+              </div>
+            </div>
+          </button>
+
+          <button type="button" onclick="setFoodieBotDiet('jain')" class="p-4 rounded-2xl bg-[#faf9f5] border-2 border-amber-300 hover:border-amber-600 text-left transition transform active:scale-98 cursor-pointer group shadow-xs">
+            <div class="flex items-center gap-3">
+              <span class="text-3xl p-2 rounded-xl bg-amber-50 text-amber-800 shadow-2xs">🟡</span>
+              <div class="min-w-0">
+                <div class="font-bold text-sm text-[#0d2d24] group-hover:text-amber-800 transition">Strictly Jain Only</div>
+                <div class="text-xs text-stone-500 mt-0.5">No onion, garlic, or root vegetables</div>
+              </div>
+            </div>
+          </button>
+        </div>
+      </div>
+    `;
+  } else if (foodieBotState.step === 3) {
+    body.innerHTML = `
+      <div class="space-y-4">
+        <!-- Progress Indicator -->
+        <div class="flex items-center justify-between text-[11px] font-bold text-stone-400">
+          <button type="button" onclick="setFoodieBotStep(2)" class="text-stone-500 hover:text-[#0d2d24] font-semibold flex items-center gap-1 cursor-pointer">
+            <i class="fa-solid fa-arrow-left text-[10px]"></i> Back
+          </button>
+          <span class="text-[#0d2d24] font-extrabold flex items-center gap-1.5">
+            <span class="w-5 h-5 rounded-full bg-[#0d2d24] text-[#ffdaa9] flex items-center justify-center text-[10px]">3</span>
+            Portion & Appetite
+          </span>
+          <span class="flex items-center gap-1">Step 3 of 3</span>
+        </div>
+
+        <div class="text-center space-y-1">
+          <h4 class="font-serif font-bold text-lg text-[#0d2d24]">What is your appetite level? 🍽️</h4>
+          <p class="text-xs text-stone-500">Tell Chef what portion fits your table right now.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+          <button type="button" onclick="setFoodieBotHunger('meal')" class="p-3.5 rounded-2xl bg-[#faf9f5] border border-amber-200/90 hover:border-amber-500 text-left transition transform active:scale-98 cursor-pointer group shadow-2xs">
+            <span class="text-2xl block mb-2">🍲</span>
+            <div class="font-bold text-xs text-[#0d2d24] group-hover:text-amber-800 transition">Full Hearty Meal</div>
+            <div class="text-[10px] text-stone-500 mt-0.5">Main courses, pizzas or sizzlers</div>
+          </button>
+
+          <button type="button" onclick="setFoodieBotHunger('bites')" class="p-3.5 rounded-2xl bg-[#faf9f5] border border-amber-200/90 hover:border-amber-500 text-left transition transform active:scale-98 cursor-pointer group shadow-2xs">
+            <span class="text-2xl block mb-2">🥟</span>
+            <div class="font-bold text-xs text-[#0d2d24] group-hover:text-amber-800 transition">Quick Bites & Snacks</div>
+            <div class="text-[10px] text-stone-500 mt-0.5">Starters, titbits & small plates</div>
+          </button>
+
+          <button type="button" onclick="setFoodieBotHunger('drinks')" class="p-3.5 rounded-2xl bg-[#faf9f5] border border-amber-200/90 hover:border-amber-500 text-left transition transform active:scale-98 cursor-pointer group shadow-2xs">
+            <span class="text-2xl block mb-2">🍹</span>
+            <div class="font-bold text-xs text-[#0d2d24] group-hover:text-amber-800 transition">Chilled Sips / Dessert</div>
+            <div class="text-[10px] text-stone-500 mt-0.5">Beverages, coolers & sweets</div>
+          </button>
+        </div>
+      </div>
+    `;
+  } else if (foodieBotState.step === 4) {
+    renderFoodieBotResult(body);
+  }
+}
+
+function renderFoodieBotResult(body) {
+  const matchResult = computeFoodieBotRecommendation();
+  const matchedDish = matchResult.dish;
+  const pairedDish = matchResult.pairedDish;
+  const reason = matchResult.reason;
+  const currency = (state.settings && state.settings.currencySymbol) || '₹';
+
+  if (!matchedDish) {
+    body.innerHTML = `
+      <div class="text-center py-8 space-y-3">
+        <div class="w-14 h-14 rounded-full bg-amber-50 border border-amber-200 text-amber-800 flex items-center justify-center mx-auto text-2xl">
+          👨‍🍳
+        </div>
+        <h4 class="font-serif font-bold text-base text-[#0d2d24]">No exact match found</h4>
+        <p class="text-xs text-stone-500 max-w-xs mx-auto">Try picking a broader mood or explore our complete multi-cuisine menu.</p>
+        <button type="button" onclick="resetFoodieBotQuiz()" class="px-5 py-2.5 rounded-xl bg-[#0d2d24] text-[#ffdaa9] font-bold text-xs cursor-pointer shadow">
+          Try Another Choice
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  body.innerHTML = `
+    <div class="space-y-4">
+      <!-- Top Success Header -->
+      <div class="flex items-center justify-between">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-bold">
+          <i class="fa-solid fa-sparkles text-amber-500"></i>
+          <span>Chef's Perfect Match For You</span>
+        </span>
+        <button type="button" onclick="resetFoodieBotQuiz()" class="text-xs font-bold text-amber-800 hover:text-amber-950 cursor-pointer flex items-center gap-1">
+          <i class="fa-solid fa-rotate-right text-[10px]"></i>
+          <span>Restart</span>
+        </button>
+      </div>
+
+      <!-- Main Recommended Dish Card -->
+      <div class="p-4 rounded-3xl bg-gradient-to-br from-amber-50/80 via-white to-amber-50/40 border-2 border-[#dfb15b] shadow-md space-y-3">
+        <div class="flex gap-3.5">
+          <img
+            src="${resolveDishImage(matchedDish)}"
+            alt="${matchedDish.name}"
+            class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border border-[#e6e2d6] shadow-inner shrink-0"
+          />
+          <div class="min-w-0 flex-1 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center gap-1.5 flex-wrap mb-1">
+                ${matchedDish.isJain ? `
+                  <span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+                    🟡 Jain
+                  </span>
+                ` : ''}
+                ${matchedDish.isChefSpecial ? `
+                  <span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#ffdaa9] text-[#0d2d24] border border-[#dfb15b]">
+                    ⭐ Chef's Special
+                  </span>
+                ` : matchedDish.isBestseller ? `
+                  <span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300">
+                    Popular
+                  </span>
+                ` : ''}
+                ${matchedDish.spiceLevel >= 2 ? `<span class="text-[9px] font-bold text-rose-600">🌶️ Spicy</span>` : ''}
+              </div>
+
+              <h4 class="font-serif font-bold text-base sm:text-lg text-[#0d2d24] leading-tight">
+                ${matchedDish.name}
+              </h4>
+              <p class="text-[11px] text-stone-600 mt-1 line-clamp-2 leading-relaxed">
+                ${matchedDish.description || 'Prepared fresh with finest ingredients.'}
+              </p>
+            </div>
+
+            <div class="pt-2 flex items-center justify-between border-t border-[#f0eee6]">
+              <span class="font-serif font-black text-base text-[#0d2d24]">
+                ${currency}${matchedDish.price}
+              </span>
+              <button
+                type="button"
+                onclick="closeFoodieBotModal(); openDishModal('${matchedDish.id}');"
+                class="px-3.5 py-1.5 rounded-xl bg-[#0d2d24] hover:bg-[#153f33] text-[#ffdaa9] font-bold text-xs flex items-center gap-1.5 transition shadow cursor-pointer"
+              >
+                <span>View Dish</span>
+                <i class="fa-solid fa-arrow-right text-[10px]"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Why Chef Picked This -->
+        <div class="p-2.5 rounded-xl bg-white/90 border border-amber-200/80 text-xs text-stone-700 flex items-start gap-2">
+          <span class="text-sm shrink-0">💡</span>
+          <p class="text-[11px] leading-snug">
+            <span class="font-bold text-[#0d2d24]">Why this dish:</span> ${reason}
+          </p>
+        </div>
+      </div>
+
+      <!-- Recommended Complementary Pairing (if available) -->
+      ${pairedDish ? `
+        <div class="space-y-2 pt-1">
+          <div class="flex items-center gap-1.5 text-xs font-serif font-bold text-[#0d2d24]">
+            <span class="text-amber-600">✨</span>
+            <span>Recommended Pairing With This:</span>
+          </div>
+          <div
+            onclick="closeFoodieBotModal(); openDishModal('${pairedDish.id}');"
+            class="p-3 rounded-2xl bg-white border border-amber-200 hover:border-amber-400 cursor-pointer transition flex items-center gap-3 group shadow-2xs hover:shadow-sm"
+          >
+            <img
+              src="${resolveDishImage(pairedDish)}"
+              alt="${pairedDish.name}"
+              class="w-12 h-12 rounded-xl object-cover border border-[#e6e2d6] shrink-0"
+            />
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center justify-between gap-1">
+                <span class="font-bold text-xs text-[#0d2d24] group-hover:text-amber-800 transition truncate">
+                  ${pairedDish.name}
+                </span>
+                <span class="text-xs font-extrabold text-[#0d2d24] shrink-0">
+                  ${currency}${pairedDish.price}
+                </span>
+              </div>
+              <p class="text-[10px] text-stone-500 truncate mt-0.5">
+                ${pairedDish.pairingReason || 'Perfect beverage / dessert companion'}
+              </p>
+            </div>
+            <i class="fa-solid fa-arrow-right text-xs text-stone-400 group-hover:text-amber-800 transition shrink-0"></i>
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- Bottom Actions -->
+      <div class="pt-2 flex items-center justify-between gap-2 border-t border-[#f0eee6]">
+        <button
+          type="button"
+          onclick="resetFoodieBotQuiz()"
+          class="flex-1 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs transition cursor-pointer text-center"
+        >
+          Try Another Vibe
+        </button>
+        <button
+          type="button"
+          onclick="closeFoodieBotModal()"
+          class="flex-1 py-2.5 rounded-xl bg-[#0d2d24] hover:bg-[#153f33] text-[#ffdaa9] font-bold text-xs transition cursor-pointer text-center"
+        >
+          Explore Full Menu
+        </button>
+      </div>
+
+    </div>
+  `;
+}
+
+function computeFoodieBotRecommendation() {
+  if (!state.items || !state.items.length) {
+    return { dish: null, pairedDish: null, reason: '' };
+  }
+
+  const { selectedMood, selectedDiet, selectedHunger } = foodieBotState;
+  const isJainOnly = selectedDiet === 'jain';
+
+  // 1. Available items matching diet
+  let candidates = state.items.filter(i => {
+    if (i.isAvailable === false) return false;
+    if (isJainOnly && !i.isJain) return false;
+    return true;
+  });
+
+  if (!candidates.length) {
+    return { dish: null, pairedDish: null, reason: '' };
+  }
+
+  // 2. Map category keywords / IDs
+  const matchCategory = (items, categoryIds) => {
+    return items.filter(item => {
+      const catId = (item.categoryId || '').toLowerCase();
+      const catObj = (state.categories || []).find(c => c.id === item.categoryId);
+      const catName = (catObj ? catObj.name : '').toLowerCase();
+      return categoryIds.some(cid => catId.includes(cid.toLowerCase()) || catName.includes(cid.toLowerCase()));
+    });
+  };
+
+  let targetCategories = [];
+  let moodReason = '';
+
+  if (selectedMood === 'cheesy') {
+    moodReason = 'Handcrafted cheesy goodness loaded with rich authentic flavors.';
+    if (selectedHunger === 'meal') {
+      targetCategories = ['cat-pizza', 'cat-pasta', 'cat-fondue-mexican', 'pizza', 'pasta', 'fondue'];
+    } else if (selectedHunger === 'bites') {
+      targetCategories = ['cat-fondue-mexican', 'cat-titbits', 'fondue', 'starter', 'titbit'];
+    } else {
+      targetCategories = ['cat-shakes', 'cat-coffee', 'cat-desserts', 'shake', 'dessert'];
+    }
+  } else if (selectedMood === 'spicy') {
+    moodReason = 'Sizzling spicy spices cooked to perfection with signature chef herbs.';
+    if (selectedHunger === 'meal') {
+      targetCategories = ['cat-lebanese-sizzler', 'cat-main', 'cat-chinese', 'sizzler', 'main course', 'chinese'];
+    } else if (selectedHunger === 'bites') {
+      targetCategories = ['cat-tandoor', 'cat-chinese', 'cat-titbits', 'tandoor', 'starter'];
+    } else {
+      targetCategories = ['cat-mocktails', 'cat-shakes', 'mocktail', 'shake'];
+    }
+  } else if (selectedMood === 'light') {
+    moodReason = 'Wholesome, fresh and delightfully crisp on the palate.';
+    if (selectedHunger === 'meal') {
+      targetCategories = ['cat-pasta', 'cat-chinese', 'cat-dal-rice', 'pasta', 'rice'];
+    } else if (selectedHunger === 'bites') {
+      targetCategories = ['cat-soups', 'cat-salads', 'cat-titbits', 'soup', 'salad', 'starter'];
+    } else {
+      targetCategories = ['cat-mocktails', 'cat-coffee', 'mocktail', 'coffee'];
+    }
+  } else if (selectedMood === 'sweet_drinks') {
+    moodReason = 'Decadent sweet indulgence and signature handcrafted refreshments.';
+    targetCategories = ['cat-desserts', 'cat-shakes', 'cat-mocktails', 'cat-coffee', 'dessert', 'shake', 'coffee'];
+  }
+
+  let pool = matchCategory(candidates, targetCategories);
+  if (!pool.length) {
+    if (selectedMood === 'spicy') {
+      pool = candidates.filter(i => i.spiceLevel && i.spiceLevel >= 2);
+    }
+  }
+  if (!pool.length) pool = candidates;
+
+  // Rank pool by Chef Special, Bestseller, and image presence
+  pool.sort((a, b) => {
+    const scoreA = (a.isChefSpecial ? 4 : 0) + (a.isBestseller ? 2 : 0) + (a.image ? 1 : 0);
+    const scoreB = (b.isChefSpecial ? 4 : 0) + (b.isBestseller ? 2 : 0) + (b.image ? 1 : 0);
+    return scoreB - scoreA;
+  });
+
+  // Pick top candidate
+  const matchedDish = pool[0];
+
+  // Pick complementary pairing dish
+  let pairedDish = null;
+  const pairings = getSmartPairingsForDish(matchedDish);
+  if (pairings && pairings.length) {
+    pairedDish = pairings[0];
+  }
+
+  return {
+    dish: matchedDish,
+    pairedDish,
+    reason: moodReason
+  };
 }
