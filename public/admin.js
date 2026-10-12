@@ -1934,9 +1934,91 @@ function saveProfileSettings(e) {
 
 // ==================== 2FA SETTINGS & MODALS HANDLERS ====================
 
+const TWO_FACTOR_MASTER_PASS = 'Lamensa3214';
+let pendingTwoFactorSecurityAction = null;
 let pendingTwoFactorSecret = null;
 
+// Gatekeeper: Prompt for Master Security Password (Lamensa3214) before allowing access to QR code or 2FA settings
+function requestTwoFactorSecurityAccess(action) {
+  pendingTwoFactorSecurityAction = action;
+  const modal = document.getElementById('twoFactorAuthPromptModal');
+  const input = document.getElementById('twoFactorMasterPassInput');
+  const errEl = document.getElementById('twoFactorMasterPassError');
+  const actionDesc = document.getElementById('twoFactorSecurityActionDesc');
+
+  if (actionDesc) {
+    if (action === 'setup') {
+      actionDesc.textContent = 'Enter master security password to view Authenticator QR Code & setup.';
+    } else if (action === 'disable') {
+      actionDesc.textContent = 'Enter master security password to disable Two-Factor Authentication.';
+    } else if (action === 'recovery') {
+      actionDesc.textContent = 'Enter master security password to view Emergency Recovery Code.';
+    }
+  }
+
+  if (errEl) errEl.classList.add('hidden');
+  if (input) {
+    input.value = '';
+    input.classList.remove('border-rose-500');
+  }
+
+  if (modal) modal.classList.remove('hidden');
+  if (input) setTimeout(() => input.focus(), 150);
+}
+
+function closeTwoFactorAuthPromptModal() {
+  const modal = document.getElementById('twoFactorAuthPromptModal');
+  if (modal) modal.classList.add('hidden');
+  pendingTwoFactorSecurityAction = null;
+}
+
+function handleTwoFactorSecurityUnlock(e) {
+  if (e) e.preventDefault();
+  const input = document.getElementById('twoFactorMasterPassInput');
+  const errEl = document.getElementById('twoFactorMasterPassError');
+  const entered = (input ? input.value : '').trim();
+
+  if (entered !== TWO_FACTOR_MASTER_PASS) {
+    if (errEl) {
+      errEl.textContent = 'Incorrect security password. Access denied.';
+      errEl.classList.remove('hidden');
+    }
+    if (input) {
+      input.classList.add('border-rose-500');
+      setTimeout(() => input.classList.remove('border-rose-500'), 1500);
+      input.focus();
+    }
+    return;
+  }
+
+  // Password verified! Proceed with requested action
+  const action = pendingTwoFactorSecurityAction;
+  closeTwoFactorAuthPromptModal();
+
+  if (action === 'setup') {
+    proceedToOpenTwoFactorSetupModal();
+  } else if (action === 'disable') {
+    proceedToDisableTwoFactorAuth();
+  } else if (action === 'recovery') {
+    proceedToShowRecoveryCodeModal();
+  }
+}
+
+// User-facing entry points that trigger the password gate
 function openTwoFactorSetupModal() {
+  requestTwoFactorSecurityAccess('setup');
+}
+
+function disableTwoFactorAuth() {
+  requestTwoFactorSecurityAccess('disable');
+}
+
+function showRecoveryCodeModal() {
+  requestTwoFactorSecurityAccess('recovery');
+}
+
+// Unlocked actions (run ONLY after verifying Lamensa3214)
+function proceedToOpenTwoFactorSetupModal() {
   const existingSecret = adminState.settings && adminState.settings.twoFactorSecret;
   pendingTwoFactorSecret = existingSecret || generateBase32Secret(16);
 
@@ -1969,6 +2051,11 @@ function openTwoFactorSetupModal() {
 function closeTwoFactorSetupModal() {
   const modal = document.getElementById('twoFactorSetupModal');
   if (modal) modal.classList.add('hidden');
+  // Clear sensitive QR and secret from DOM when closed
+  const qrImg = document.getElementById('twoFactorQrImage');
+  if (qrImg) qrImg.src = '';
+  const secretEl = document.getElementById('twoFactorSecretText');
+  if (secretEl) secretEl.textContent = '••••••••••••••••';
 }
 
 function copyTwoFactorSecret() {
@@ -2036,11 +2123,11 @@ async function verifyAndEnableTwoFactor() {
     markDraftChanged('Two-Factor Authentication activated');
   }
 
-  showRecoveryCodeModal();
+  proceedToShowRecoveryCodeModal();
   showAdminToast('Two-Factor Authentication activated successfully!', 'success');
 }
 
-async function disableTwoFactorAuth() {
+async function proceedToDisableTwoFactorAuth() {
   const confirmed = confirm('Are you sure you want to disable Two-Factor Authentication? Your admin dashboard will only require a password to log in.');
   if (!confirmed) return;
 
@@ -2061,7 +2148,7 @@ async function disableTwoFactorAuth() {
   showAdminToast('Two-Factor Authentication disabled.', 'info');
 }
 
-function showRecoveryCodeModal() {
+function proceedToShowRecoveryCodeModal() {
   const recoveryCode = (adminState.settings && adminState.settings.twoFactorRecoveryCode) || generateEmergencyRecoveryCode();
   if (adminState.settings) adminState.settings.twoFactorRecoveryCode = recoveryCode;
 
@@ -2075,6 +2162,8 @@ function showRecoveryCodeModal() {
 function closeRecoveryCodeModal() {
   const modal = document.getElementById('recoveryCodeModal');
   if (modal) modal.classList.add('hidden');
+  const displayEl = document.getElementById('recoveryCodeDisplay');
+  if (displayEl) displayEl.textContent = 'LM-••••-••••';
 }
 
 function copyRecoveryCode() {

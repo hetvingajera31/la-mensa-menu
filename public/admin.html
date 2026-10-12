@@ -1314,6 +1314,56 @@
     </div>
   </div>
 
+  <!-- ================= 2FA MASTER SECURITY PASSWORD PROMPT MODAL ================= -->
+  <div id="twoFactorAuthPromptModal" class="fixed inset-0 z-50 bg-[#09221b]/80 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 sm:p-7 shadow-2xl border border-[#e6e2d6] space-y-4">
+      
+      <!-- Modal Header -->
+      <div class="text-center space-y-2">
+        <div class="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 flex items-center justify-center mx-auto text-xl shadow-xs">
+          <i class="fa-solid fa-user-shield"></i>
+        </div>
+        <h3 class="font-serif font-bold text-lg text-[#0d2d24]">Security Authorization</h3>
+        <p id="twoFactorSecurityActionDesc" class="text-xs text-stone-500 leading-relaxed">
+          Enter master security password to view Authenticator QR Code & setup.
+        </p>
+      </div>
+
+      <!-- Password Form -->
+      <form id="twoFactorAuthPromptForm" onsubmit="handleTwoFactorSecurityUnlock(event)" class="space-y-3.5">
+        <div>
+          <input
+            type="password"
+            id="twoFactorMasterPassInput"
+            placeholder="Security password"
+            class="w-full px-4 py-3 rounded-xl border border-[#dfb15b] text-center text-sm font-semibold tracking-wider outline-none focus:ring-2 focus:ring-[#dfb15b] text-[#0d2d24] bg-white placeholder-stone-400 shadow-inner"
+            autocomplete="off"
+            required
+          />
+        </div>
+        <p id="twoFactorMasterPassError" class="text-xs text-rose-600 font-semibold text-center hidden"></p>
+
+        <div class="pt-2 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onclick="closeTwoFactorAuthPromptModal()"
+            class="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold text-xs transition cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-5 py-2.5 rounded-xl bg-[#0d2d24] hover:bg-[#153f33] text-[#ffdaa9] font-bold text-xs flex items-center gap-1.5 transition shadow cursor-pointer"
+          >
+            <i class="fa-solid fa-lock-open text-xs"></i>
+            <span>Unlock Access</span>
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
   <!-- ================= 2FA SETUP MODAL ================= -->
   <div id="twoFactorSetupModal" class="fixed inset-0 z-50 bg-[#09221b]/80 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-4">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-[#e6e2d6] space-y-4 max-h-[92vh] overflow-y-auto">
@@ -1465,6 +1515,6 @@
   <script src="firebase-config.js?v=2.3"></script>
 
   <!-- Admin Controller Script -->
-  <script src="admin.js?v=2.7"></script>
+  <script src="admin.js?v=2.8"></script>
 </body>
 </html>
